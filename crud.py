@@ -255,9 +255,11 @@ def get_system_stats(db: Session):
     total_users = db.query(func.count(models.User.id)).scalar()
     total_photos = db.query(func.count(models.Photo.id)).scalar()
     total_real_photos = db.query(func.count(models.Photo.id)).filter(models.Photo.user_id != None).scalar()
-    total_votes = db.query(func.count(models.Match.id)).scalar()
+    # Only count real non-guest votes
+    total_votes = db.query(func.count(models.Match.id)).filter(models.Match.is_guest == False).scalar()
     
-    top_photo = db.query(models.Photo).order_by(models.Photo.elo_rating.desc()).first()
+    # Top rating is strictly the highest rated USER photo
+    top_photo = db.query(models.Photo).filter(models.Photo.user_id != None).order_by(models.Photo.elo_rating.desc()).first()
     
     return {
         "total_users": total_users,
