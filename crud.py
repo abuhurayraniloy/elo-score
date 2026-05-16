@@ -214,10 +214,7 @@ def submit_vote(db: Session, vote: schemas.VoteSubmit, user_id: int):
     }
 
 def get_leaderboard(db: Session):
-    user_photos = db.query(models.Photo).filter(models.Photo.user_id != None).order_by(models.Photo.elo_rating.desc()).all()
-    if user_photos:
-        return user_photos
-    return db.query(models.Photo).filter(models.Photo.user_id == None).order_by(models.Photo.elo_rating.desc()).all()
+    return db.query(models.Photo).filter(models.Photo.user_id != None).order_by(models.Photo.elo_rating.desc()).all()
 
 def delete_photo(db: Session, photo_id: int):
     db.query(models.Photo).filter(models.Photo.id == photo_id).delete()
