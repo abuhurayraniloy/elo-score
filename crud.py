@@ -251,6 +251,16 @@ def update_user_approval(db: Session, user_id: int, can_vote: bool):
     db.refresh(db_user)
     return db_user
 
+def delete_user(db: Session, user_id: int):
+    # Delete associated photos
+    db.query(models.Photo).filter(models.Photo.user_id == user_id).delete()
+    # Delete associated matches
+    db.query(models.Match).filter(models.Match.user_id == user_id).delete()
+    # Delete user
+    db.query(models.User).filter(models.User.id == user_id).delete()
+    db.commit()
+    return True
+
 def get_system_stats(db: Session):
     total_users = db.query(func.count(models.User.id)).scalar()
     total_photos = db.query(func.count(models.Photo.id)).scalar()

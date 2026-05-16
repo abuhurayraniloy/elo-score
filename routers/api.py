@@ -167,3 +167,11 @@ def update_admin_user_approval(
     if not updated:
         raise HTTPException(status_code=404, detail="User not found")
     return updated
+
+@router.delete("/admin/users/{user_id}")
+def delete_admin_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(get_admin_user)
+):
+    return crud.delete_user(db, user_id)

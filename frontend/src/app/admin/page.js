@@ -5,7 +5,7 @@ import {
   uploadImage, getAdminStats, getAdminUsers, 
   getAdminPhotos, deleteAdminPhoto, getAdminSettings, 
   updateAdminSetting, updateAdminPhoto, updateAdminUserRole,
-  updateAdminUserApproval, getUserInfo
+  updateAdminUserApproval, getUserInfo, deleteAdminUser
 } from "../../lib/api";
 
 export default function AdminDashboard() {
@@ -96,6 +96,17 @@ export default function AdminDashboard() {
     try {
       await updateAdminUserApproval(id, can_vote);
       setUsers(users.map(u => u.id === id ? { ...u, can_vote } : u));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleDeleteUser = async (id) => {
+    if (!confirm("Are you sure you want to delete this user? This will also remove their photo and match history!")) return;
+    try {
+      await deleteAdminUser(id);
+      setUsers(users.filter(u => u.id !== id));
+      alert("User successfully deleted!");
     } catch (err) {
       alert(err.message);
     }
@@ -234,6 +245,7 @@ export default function AdminDashboard() {
                       <th style={{ padding: "1rem" }}>Role</th>
                       <th style={{ padding: "1rem" }}>Approved</th>
                       <th style={{ padding: "1rem" }}>Joined</th>
+                      <th style={{ padding: "1rem" }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -260,6 +272,14 @@ export default function AdminDashboard() {
                           />
                         </td>
                         <td style={{ padding: "1rem" }}>{new Date(u.created_at).toLocaleDateString()}</td>
+                        <td style={{ padding: "1rem" }}>
+                          <button 
+                            onClick={() => handleDeleteUser(u.id)}
+                            style={{ padding: "0.4rem 0.8rem", background: "rgba(255,75,75,0.2)", color: "#ff4b4b", border: "1px solid #ff4b4b", borderRadius: "4px", cursor: "pointer", fontWeight: "600", fontSize: "0.8rem" }}
+                          >
+                            Delete
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

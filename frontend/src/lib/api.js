@@ -207,6 +207,15 @@ export const updateAdminUserApproval = async (id, can_vote) => {
   return res.json();
 };
 
+export const deleteAdminUser = async (id) => {
+  const res = await fetch(`${BASE_URL}/api/admin/users/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error("Failed to delete user");
+  return res.json();
+};
+
 export const getAdminSettings = async () => {
   const res = await fetch(`${BASE_URL}/api/admin/settings`, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error("Failed to fetch settings");
