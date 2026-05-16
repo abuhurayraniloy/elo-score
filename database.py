@@ -23,7 +23,7 @@ Base = declarative_base()
 
 # Supabase Configuration
 supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_KEY")
+supabase_key = os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_KEY")
 supabase: Client = None
 if supabase_url and supabase_key and "your-project" not in supabase_url:
     try:
