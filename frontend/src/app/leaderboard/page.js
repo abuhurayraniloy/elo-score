@@ -58,7 +58,7 @@ export default function Leaderboard() {
             leaderboard.map((photo, index) => (
               <div key={photo.id} className={`rank-item rank-${index + 1}`}>
                 <div className="rank-number">#{index + 1}</div>
-                <img src={`${baseUrl}${photo.image_url}`} alt={`Rank ${index + 1}`} className="rank-img" />
+                <img src={photo.image_url.startsWith("http") ? photo.image_url : `${baseUrl}${photo.image_url}`} alt={`Rank ${index + 1}`} className="rank-img" />
                 <div className="rank-info">
                   <div className="rank-score">Elo: {Math.round(photo.elo_rating)}</div>
                   <div className="rank-matches">{photo.matches_played} matches played</div>

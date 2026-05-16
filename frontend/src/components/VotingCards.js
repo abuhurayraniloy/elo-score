@@ -76,7 +76,7 @@ export default function VotingCards({ match, onVote }) {
       `}} />
       <div className="cards-container">
         <div className={getCardClass(match.photo_a.id)} onClick={() => handleVote(match.photo_a.id)}>
-          <img src={`${baseUrl}${match.photo_a.image_url}`} alt="Photo A" className="card-img" />
+          <img src={match.photo_a.image_url.startsWith("http") ? match.photo_a.image_url : `${baseUrl}${match.photo_a.image_url}`} alt="Photo A" className="card-img" />
           <div className="card-overlay">
             <button className="vote-btn">❤️</button>
           </div>
@@ -88,9 +88,9 @@ export default function VotingCards({ match, onVote }) {
         </div>
         
         <div className="vs-badge">VS</div>
-
+ 
         <div className={getCardClass(match.photo_b.id)} onClick={() => handleVote(match.photo_b.id)}>
-          <img src={`${baseUrl}${match.photo_b.image_url}`} alt="Photo B" className="card-img" />
+          <img src={match.photo_b.image_url.startsWith("http") ? match.photo_b.image_url : `${baseUrl}${match.photo_b.image_url}`} alt="Photo B" className="card-img" />
           <div className="card-overlay">
             <button className="vote-btn">❤️</button>
           </div>
