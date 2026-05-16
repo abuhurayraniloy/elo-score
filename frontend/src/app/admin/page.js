@@ -167,10 +167,11 @@ export default function AdminDashboard() {
         ) : (
           <div className="admin-content">
             {activeTab === "overview" && stats && (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1.5rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.5rem" }}>
                 <StatCard title="Total Votes" value={stats.total_votes} icon="🔥" />
                 <StatCard title="Active Users" value={stats.total_users} icon="👤" />
-                <StatCard title="Total Photos" value={stats.total_photos} icon="📸" />
+                <StatCard title="Real Photos (User)" value={stats.total_real_photos} icon="⭐" />
+                <StatCard title="System Photos" value={stats.total_photos - stats.total_real_photos} icon="⚙️" />
                 {stats.top_photo && (
                   <StatCard title="Top Rating" value={`${Math.round(stats.top_photo.elo_rating)}`} icon="🏆" subText={stats.top_photo.filename} />
                 )}

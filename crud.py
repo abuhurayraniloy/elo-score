@@ -254,6 +254,7 @@ def update_user_approval(db: Session, user_id: int, can_vote: bool):
 def get_system_stats(db: Session):
     total_users = db.query(func.count(models.User.id)).scalar()
     total_photos = db.query(func.count(models.Photo.id)).scalar()
+    total_real_photos = db.query(func.count(models.Photo.id)).filter(models.Photo.user_id != None).scalar()
     total_votes = db.query(func.count(models.Match.id)).scalar()
     
     top_photo = db.query(models.Photo).order_by(models.Photo.elo_rating.desc()).first()
@@ -261,6 +262,7 @@ def get_system_stats(db: Session):
     return {
         "total_users": total_users,
         "total_photos": total_photos,
+        "total_real_photos": total_real_photos,
         "total_votes": total_votes,
         "top_photo": top_photo
     }
