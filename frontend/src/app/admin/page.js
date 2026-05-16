@@ -5,7 +5,8 @@ import {
   uploadImage, getAdminStats, getAdminUsers, 
   getAdminPhotos, deleteAdminPhoto, getAdminSettings, 
   updateAdminSetting, updateAdminPhoto, updateAdminUserRole,
-  updateAdminUserApproval, getUserInfo, deleteAdminUser
+  updateAdminUserApproval, getUserInfo, deleteAdminUser,
+  bulkDeleteAdminUsers
 } from "../../lib/api";
 
 export default function AdminDashboard() {
@@ -16,6 +17,7 @@ export default function AdminDashboard() {
   const [settings, setSettings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState([]);
   
   // Synchronous security check on first render
   if (typeof window !== "undefined") {
@@ -35,6 +37,7 @@ export default function AdminDashboard() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
+    setSelectedUsers([]);
     fetchData();
   }, [activeTab]);
 
@@ -106,9 +109,31 @@ export default function AdminDashboard() {
     try {
       await deleteAdminUser(id);
       setUsers(users.filter(u => u.id !== id));
+      setSelectedUsers(selectedUsers.filter(sid => sid !== id));
       alert("User successfully deleted!");
     } catch (err) {
       alert(err.message);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedUsers.length === 0) return;
+    if (!confirm(`Are you sure you want to delete the ${selectedUsers.length} selected users? This will also remove all their associated photos and match history!`)) return;
+    try {
+      await bulkDeleteAdminUsers(selectedUsers);
+      setUsers(users.filter(u => !selectedUsers.includes(u.id)));
+      setSelectedUsers([]);
+      alert("Selected users successfully deleted!");
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedUsers(users.map(u => u.id));
+    } else {
+      setSelectedUsers([]);
     }
   };
 
@@ -237,9 +262,35 @@ export default function AdminDashboard() {
 
             {activeTab === "users" && (
               <div className="glass-panel" style={{ overflowX: "auto" }}>
+                {selectedUsers.length > 0 && (
+                  <button 
+                    onClick={handleBulkDelete}
+                    style={{
+                      background: "rgba(255, 75, 75, 0.2)",
+                      color: "#ff4b4b",
+                      border: "1px solid #ff4b4b",
+                      padding: "0.6rem 1.2rem",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                      marginBottom: "1.2rem",
+                      transition: "all 0.3s ease"
+                    }}
+                  >
+                    🗑️ Delete Selected ({selectedUsers.length})
+                  </button>
+                )}
                 <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse" }}>
                   <thead>
                     <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                      <th style={{ padding: "1rem", width: "50px" }}>
+                        <input 
+                          type="checkbox" 
+                          onChange={handleSelectAll} 
+                          checked={selectedUsers.length === users.length && users.length > 0} 
+                          style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                        />
+                      </th>
                       <th style={{ padding: "1rem" }}>Username</th>
                       <th style={{ padding: "1rem" }}>Email</th>
                       <th style={{ padding: "1rem" }}>Role</th>
@@ -251,6 +302,20 @@ export default function AdminDashboard() {
                   <tbody>
                     {users.map(u => (
                       <tr key={u.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                        <td style={{ padding: "1rem" }}>
+                          <input 
+                            type="checkbox" 
+                            checked={selectedUsers.includes(u.id)} 
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedUsers([...selectedUsers, u.id]);
+                              } else {
+                                setSelectedUsers(selectedUsers.filter(id => id !== u.id));
+                              }
+                            }} 
+                            style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                          />
+                        </td>
                         <td style={{ padding: "1rem" }}>{u.username}</td>
                         <td style={{ padding: "1rem" }}>{u.email}</td>
                         <td style={{ padding: "1rem" }}>

@@ -83,3 +83,7 @@ class UserRoleUpdate(BaseModel):
 class UserApprovalUpdate(BaseModel):
     can_vote: bool
 
+from typing import List
+class BulkDeleteUsers(BaseModel):
+    user_ids: List[int]
+

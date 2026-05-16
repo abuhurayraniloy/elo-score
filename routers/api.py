@@ -175,3 +175,11 @@ def delete_admin_user(
     admin: models.User = Depends(get_admin_user)
 ):
     return crud.delete_user(db, user_id)
+
+@router.post("/admin/users/bulk-delete")
+def bulk_delete_admin_users(
+    payload: schemas.BulkDeleteUsers,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(get_admin_user)
+):
+    return crud.delete_users_bulk(db, payload.user_ids)

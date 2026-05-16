@@ -261,6 +261,16 @@ def delete_user(db: Session, user_id: int):
     db.commit()
     return True
 
+def delete_users_bulk(db: Session, user_ids: list[int]):
+    # Delete associated photos
+    db.query(models.Photo).filter(models.Photo.user_id.in_(user_ids)).delete(synchronize_session=False)
+    # Delete associated matches
+    db.query(models.Match).filter(models.Match.user_id.in_(user_ids)).delete(synchronize_session=False)
+    # Delete users
+    db.query(models.User).filter(models.User.id.in_(user_ids)).delete(synchronize_session=False)
+    db.commit()
+    return True
+
 def get_system_stats(db: Session):
     total_users = db.query(func.count(models.User.id)).scalar()
     total_photos = db.query(func.count(models.Photo.id)).scalar()

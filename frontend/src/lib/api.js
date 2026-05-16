@@ -216,6 +216,19 @@ export const deleteAdminUser = async (id) => {
   return res.json();
 };
 
+export const bulkDeleteAdminUsers = async (userIds) => {
+  const res = await fetch(`${BASE_URL}/api/admin/users/bulk-delete`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify({ user_ids: userIds })
+  });
+  if (!res.ok) throw new Error("Failed bulk deleting users");
+  return res.json();
+};
+
 export const getAdminSettings = async () => {
   const res = await fetch(`${BASE_URL}/api/admin/settings`, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error("Failed to fetch settings");
