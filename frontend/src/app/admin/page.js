@@ -5,7 +5,7 @@ import {
   uploadImage, getAdminStats, getAdminUsers, 
   getAdminPhotos, deleteAdminPhoto, getAdminSettings, 
   updateAdminSetting, updateAdminPhoto, updateAdminUserRole,
-  updateAdminUserApproval
+  updateAdminUserApproval, getUserInfo
 } from "../../lib/api";
 
 export default function AdminDashboard() {
@@ -16,6 +16,15 @@ export default function AdminDashboard() {
   const [settings, setSettings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  
+  // Synchronous security check on first render
+  if (typeof window !== "undefined") {
+    const userInfo = getUserInfo();
+    if (!userInfo || userInfo.role !== "admin") {
+      window.location.href = "/";
+      return null;
+    }
+  }
 
   // Editing state
   const [editingPhoto, setEditingPhoto] = useState(null);

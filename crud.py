@@ -51,8 +51,8 @@ def set_setting(db: Session, key: str, value: str):
 
 def get_next_match(db: Session, user_id: int):
     user = db.query(models.User).filter(models.User.id == user_id).first()
-    if not user or not user.can_vote:
-        return {"not_approved": True}
+    if not user:
+        return None
 
     # Check daily limit
     limit_str = get_setting(db, "daily_vote_limit", "20")
@@ -61,10 +61,11 @@ def get_next_match(db: Session, user_id: int):
     except ValueError:
         daily_limit = 20
 
-    # Count votes today
+    # Count REAL votes today (ignore guest votes for limit)
     today = func.date(models.Match.voted_at)
     votes_today = db.query(func.count(models.Match.id)).filter(
         models.Match.user_id == user_id,
+        models.Match.is_guest == False,
         func.date(models.Match.voted_at) == func.date(func.now())
     ).scalar()
 
@@ -81,21 +82,48 @@ def get_next_match(db: Session, user_id: int):
         seen_ids.add(tuple(sorted((a, b))))
 
     # Matchmaking Logic:
-    # 1. Get all photos
-    # 2. Find photo with least matches_played
-    # 3. Find opponent with similar Elo that hasn't been matched with photo A by this user
-    
-    all_photos_a = db.query(models.Photo).order_by(models.Photo.matches_played.asc(), func.random()).all()
+    # 1. Get relevant photos based on approval status
+    # Check if there are at least 2 user photos in the system (excluding self) to do real voting
+    user_photo_count = db.query(models.Photo).filter(
+        models.Photo.user_id != None,
+        models.Photo.user_id != user_id
+    ).count()
+
+    is_guest_mode = not user.can_vote or user_photo_count < 2
+
+    if is_guest_mode:
+        # GUEST MODE: Only original system photos
+        all_photos_a = db.query(models.Photo).filter(
+            models.Photo.user_id == None
+        ).order_by(models.Photo.matches_played.asc(), func.random()).all()
+    else:
+        # REAL MODE: Only user photos (excluding self)
+        all_photos_a = db.query(models.Photo).filter(
+            models.Photo.user_id != None,
+            models.Photo.user_id != user_id
+        ).order_by(models.Photo.matches_played.asc(), func.random()).all()
+
     if not all_photos_a:
         return None
 
     for photo_a in all_photos_a:
-        photo_b_candidates = db.query(models.Photo).filter(
-            models.Photo.id != photo_a.id
-        ).order_by(
-            func.abs(models.Photo.elo_rating - photo_a.elo_rating).asc(),
-            func.random()
-        ).all()
+        if is_guest_mode:
+            photo_b_candidates = db.query(models.Photo).filter(
+                models.Photo.id != photo_a.id,
+                models.Photo.user_id == None
+            ).order_by(
+                func.abs(models.Photo.elo_rating - photo_a.elo_rating).asc(),
+                func.random()
+            ).all()
+        else:
+            photo_b_candidates = db.query(models.Photo).filter(
+                models.Photo.id != photo_a.id,
+                models.Photo.user_id != None,
+                models.Photo.user_id != user_id
+            ).order_by(
+                func.abs(models.Photo.elo_rating - photo_a.elo_rating).asc(),
+                func.random()
+            ).all()
 
         # Filter out seen pairs
         match_b = None
@@ -110,7 +138,9 @@ def get_next_match(db: Session, user_id: int):
                 "photo_a": photo_a, 
                 "photo_b": match_b,
                 "votes_today": votes_today,
-                "daily_limit": daily_limit
+                "daily_limit": daily_limit,
+                "is_guest": is_guest_mode,
+                "no_real_photos": user.can_vote and user_photo_count < 2
             }
             
     return None
@@ -132,8 +162,8 @@ def calculate_elo(r_a, r_b, score_a, matches_a, matches_b):
 
 def submit_vote(db: Session, vote: schemas.VoteSubmit, user_id: int):
     user = db.query(models.User).filter(models.User.id == user_id).first()
-    if not user or not user.can_vote:
-        raise ValueError("User not approved to vote")
+    if not user:
+        raise ValueError("User not found")
 
     # Fetch photos
     photo_a = db.query(models.Photo).filter(models.Photo.id == vote.photo_a_id).with_for_update().first()
@@ -142,35 +172,46 @@ def submit_vote(db: Session, vote: schemas.VoteSubmit, user_id: int):
     if not photo_a or not photo_b:
         raise ValueError("Photo not found")
         
-    if vote.winner_id not in [photo_a.id, photo_b.id]:
-        raise ValueError("Winner must be either Photo A or Photo B")
-
+    if photo_a.user_id == user_id or photo_b.user_id == user_id:
+        raise ValueError("You cannot vote on your own photo")
+        
+    old_r_a = photo_a.elo_rating
+    old_r_b = photo_b.elo_rating
+    
     score_a = 1 if vote.winner_id == photo_a.id else 0
     
     new_r_a, new_r_b = calculate_elo(
-        photo_a.elo_rating, photo_b.elo_rating,
+        old_r_a, old_r_b,
         score_a, photo_a.matches_played, photo_b.matches_played
     )
     
-    # Update photos
-    photo_a.elo_rating = new_r_a
-    photo_a.matches_played += 1
-    
-    photo_b.elo_rating = new_r_b
-    photo_b.matches_played += 1
+    # Update photos and Elo only if approved AND this is a real user-to-user match
+    is_guest_vote = not user.can_vote or photo_a.user_id is None or photo_b.user_id is None
+
+    if not is_guest_vote:
+        photo_a.elo_rating = new_r_a
+        photo_a.matches_played += 1
+        
+        photo_b.elo_rating = new_r_b
+        photo_b.matches_played += 1
     
     # Create Match record
     new_match = models.Match(
         user_id=user_id,
         photo_a_id=photo_a.id,
         photo_b_id=photo_b.id,
-        winner_id=vote.winner_id
+        winner_id=vote.winner_id,
+        is_guest=is_guest_vote
     )
     
     db.add(new_match)
     db.commit()
     
-    return True
+    return {
+        "is_guest": is_guest_vote,
+        "photo_a": {"id": photo_a.id, "old_rating": old_r_a, "new_rating": new_r_a, "change": new_r_a - old_r_a},
+        "photo_b": {"id": photo_b.id, "old_rating": old_r_b, "new_rating": new_r_b, "change": new_r_b - old_r_b}
+    }
 
 def get_leaderboard(db: Session):
     return db.query(models.Photo).order_by(models.Photo.elo_rating.desc()).all()

@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import AuthForm from "../components/AuthForm";
 import VotingCards from "../components/VotingCards";
 import ProgressBar from "../components/ProgressBar";
-import { getNextMatch, submitVote } from "../lib/api";
+import { getNextMatch, submitVote, getUserInfo } from "../lib/api";
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [matchData, setMatchData] = useState(null);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [limitReached, setLimitReached] = useState(false);
@@ -25,15 +26,11 @@ export default function Home() {
     }
 
     setIsAuthenticated(true);
+    setUser(getUserInfo());
     window.dispatchEvent(new Event("auth-change"));
     try {
       const data = await getNextMatch();
-      if (data.not_approved) {
-        setMatchData(null);
-        setError("PENDING_APPROVAL");
-      } else {
-        setMatchData(data);
-      }
+      setMatchData(data);
       setLimitReached(false);
     } catch (err) {
       if (err.status === 429) {
@@ -54,11 +51,15 @@ export default function Home() {
   }, []);
 
   const handleVote = async (winnerId) => {
-    if (!matchData) return;
     try {
-      await submitVote(matchData.photo_a.id, matchData.photo_b.id, winnerId);
-      // Load next match
-      await checkAuthAndLoadMatch();
+      const result = await submitVote(matchData.photo_a.id, matchData.photo_b.id, winnerId);
+      
+      // Wait for the animation to play before fetching the next match
+      setTimeout(async () => {
+        await checkAuthAndLoadMatch();
+      }, 1000);
+
+      return result;
     } catch (err) {
       setError(err.message || "Failed to submit vote");
     }
@@ -88,21 +89,20 @@ export default function Home() {
         <ProgressBar votesToday={matchData.votes_today} dailyLimit={matchData.daily_limit} />
       )}
 
+      {matchData && matchData.is_guest && (
+        <div className="glass-panel" style={{ padding: "1rem", marginBottom: "2rem", textAlign: "center", border: "1px solid var(--primary)", background: "rgba(255, 75, 75, 0.1)" }}>
+          <span style={{ fontWeight: "bold", color: "var(--primary)" }}>🎮 GUEST MODE</span>
+          <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>
+            {matchData.no_real_photos 
+              ? "Your account is approved! However, we are waiting for more user photos to begin the real competition. You are currently in guest mode."
+              : "Your account is pending approval. You are currently voting in training mode (no rating impact)."}
+          </p>
+        </div>
+      )}
+
       {limitReached ? (
         <div className="glass-panel" style={{ padding: "3rem", textAlign: "center", marginTop: "2rem" }}>
           <h2 style={{ fontSize: "2rem", marginBottom: "1rem" }}>Redirecting to Leaderboard...</h2>
-        </div>
-      ) : error === "PENDING_APPROVAL" ? (
-        <div className="glass-panel" style={{ padding: "4rem", maxWidth: "600px", margin: "0 auto", marginTop: "2rem", textAlign: "center" }}>
-          <h1 style={{ fontSize: "3rem", marginBottom: "1.5rem" }}>⏳</h1>
-          <h2 style={{ fontSize: "2rem", marginBottom: "1rem" }}>Pending Approval</h2>
-          <p style={{ color: "var(--text-muted)", fontSize: "1.2rem", lineHeight: "1.6" }}>
-            Your account is currently waiting for admin approval. 
-            Once activated, you'll be able to join the ranking and cast your votes!
-          </p>
-          <div style={{ marginTop: "2rem", padding: "1rem", background: "rgba(255,255,255,0.05)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }}>
-            <p style={{ fontSize: "0.9rem" }}>Tip: Check back soon or contact an admin to speed up the process.</p>
-          </div>
         </div>
       ) : error ? (
         <div className="error-text" style={{ marginBottom: "1rem", fontSize: "1.2rem", textAlign: "center" }}>

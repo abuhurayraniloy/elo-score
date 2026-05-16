@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getUserInfo } from "../lib/api";
 
 export default function Navbar() {
-  const [isAuth, setIsAuth] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const checkAuth = () => {
-      setIsAuth(!!localStorage.getItem("token"));
+      setUser(getUserInfo());
     };
     
     checkAuth();
@@ -29,13 +30,21 @@ export default function Navbar() {
         <div className="nav-links" style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
           <a href="/">Vote</a>
           <a href="/leaderboard">Leaderboard</a>
-          {isAuth && (
-            <button 
-              onClick={handleLogout} 
-              style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontWeight: "600", fontSize: "1rem" }}
-            >
-              Log Out
-            </button>
+          {user?.role === "admin" && (
+            <a href="/admin" style={{ color: "var(--primary)", fontWeight: "bold" }}>Admin</a>
+          )}
+          {user && (
+            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+              <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                Hi, <span style={{ color: "#fff", fontWeight: "600" }}>{user.username}</span>
+              </span>
+              <button 
+                onClick={handleLogout} 
+                style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontWeight: "600", fontSize: "0.9rem" }}
+              >
+                Log Out
+              </button>
+            </div>
           )}
         </div>
       </div>

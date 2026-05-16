@@ -6,6 +6,41 @@ export const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+export const decodeToken = (token) => {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+};
+
+export const getUserInfo = () => {
+  if (typeof window === "undefined") return null;
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+  const decoded = decodeToken(token);
+  if (!decoded) return null;
+  
+  // Check if token is expired
+  if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+    localStorage.removeItem("token");
+    return null;
+  }
+  
+  return {
+    username: decoded.sub,
+    role: decoded.role
+  };
+};
+
 export const login = async (username, password) => {
   const formData = new URLSearchParams();
   formData.append("username", username);
@@ -23,11 +58,16 @@ export const login = async (username, password) => {
   return data;
 };
 
-export const register = async (username, email, password) => {
+export const register = async (username, email, password, file) => {
+  const formData = new FormData();
+  formData.append("username", username);
+  formData.append("email", email);
+  formData.append("password", password);
+  formData.append("file", file);
+
   const res = await fetch(`${BASE_URL}/api/auth/register`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, email, password }),
+    body: formData,
   });
   if (!res.ok) {
     const data = await res.json();

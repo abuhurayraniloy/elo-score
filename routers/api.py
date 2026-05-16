@@ -2,20 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 import schemas, crud, models, auth
-from database import get_db
+from database import get_db, supabase
 from fastapi import UploadFile, File
 import uuid
 import os
-from supabase import create_client, Client
-
-supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_KEY")
-supabase: Client = None
-if supabase_url and supabase_key and "your-project" not in supabase_url:
-    try:
-        supabase = create_client(supabase_url, supabase_key)
-    except Exception as e:
-        print(f"Failed to initialize Supabase client: {e}")
 
 router = APIRouter(
     prefix="/api",
@@ -41,8 +31,7 @@ def submit_vote(
     current_user: models.User = Depends(auth.get_current_user)
 ):
     try:
-        crud.submit_vote(db, vote, user_id=current_user.id)
-        return {"detail": "Vote submitted successfully"}
+        return crud.submit_vote(db, vote, user_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

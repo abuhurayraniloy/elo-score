@@ -4,15 +4,23 @@ import { useState } from "react";
 
 export default function VotingCards({ match, onVote }) {
   const [animatingWinner, setAnimatingWinner] = useState(null);
+  const [eloResult, setEloResult] = useState(null);
 
-  const handleVote = (winnerId) => {
+  const handleVote = async (winnerId) => {
     if (animatingWinner) return;
     setAnimatingWinner(winnerId);
     
+    // Call onVote and wait for the math result
+    const result = await onVote(winnerId);
+    if (result) {
+      setEloResult(result);
+    }
+    
+    // Longer timeout to let the user see the math
     setTimeout(() => {
-      onVote(winnerId);
       setAnimatingWinner(null);
-    }, 450);
+      setEloResult(null);
+    }, 1200);
   };
 
   const getCardClass = (photoId) => {
@@ -47,6 +55,24 @@ export default function VotingCards({ match, onVote }) {
           0% { transform: translateY(0); opacity: 1; } 
           100% { transform: translateY(80px); opacity: 0; } 
         }
+        .elo-float {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-size: 3rem;
+          font-weight: 800;
+          color: var(--primary);
+          text-shadow: 0 0 20px rgba(0,0,0,0.8);
+          animation: float-up 1s ease-out forwards;
+          pointer-events: none;
+          z-index: 100;
+        }
+        @keyframes float-up {
+          0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+          20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+          100% { transform: translate(-50%, -150%) scale(1); opacity: 0; }
+        }
       `}} />
       <div className="cards-container">
         <div className={getCardClass(match.photo_a.id)} onClick={() => handleVote(match.photo_a.id)}>
@@ -54,6 +80,11 @@ export default function VotingCards({ match, onVote }) {
           <div className="card-overlay">
             <button className="vote-btn">❤️</button>
           </div>
+          {eloResult && (
+            <div className="elo-float" style={{ color: eloResult.photo_a.change > 0 ? "#10b981" : "#ff4b4b" }}>
+              {eloResult.photo_a.change > 0 ? "+" : ""}{eloResult.photo_a.change.toFixed(1)}
+            </div>
+          )}
         </div>
         
         <div className="vs-badge">VS</div>
@@ -63,6 +94,11 @@ export default function VotingCards({ match, onVote }) {
           <div className="card-overlay">
             <button className="vote-btn">❤️</button>
           </div>
+          {eloResult && (
+            <div className="elo-float" style={{ color: eloResult.photo_b.change > 0 ? "#10b981" : "#ff4b4b" }}>
+              {eloResult.photo_b.change > 0 ? "+" : ""}{eloResult.photo_b.change.toFixed(1)}
+            </div>
+          )}
         </div>
       </div>
     </div>

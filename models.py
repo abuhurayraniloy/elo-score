@@ -29,6 +29,7 @@ class Photo(Base):
     image_url = Column(String, nullable=False) # e.g., "/static/image1.jpg"
     elo_rating = Column(Float, default=1200.0)
     matches_played = Column(Integer, default=0)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     # Relationships for matches this photo was part of
     matches_as_a = relationship("Match", foreign_keys="[Match.photo_a_id]", back_populates="photo_a")
@@ -44,6 +45,7 @@ class Match(Base):
     photo_b_id = Column(Integer, ForeignKey("photos.id"))
     winner_id = Column(Integer, ForeignKey("photos.id"))
     voted_at = Column(DateTime, default=utcnow)
+    is_guest = Column(Boolean, default=False)
 
     user = relationship("User", back_populates="matches")
     photo_a = relationship("Photo", foreign_keys=[photo_a_id], back_populates="matches_as_a")
