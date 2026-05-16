@@ -11,7 +11,7 @@ def get_user_by_username(db: Session, username: str):
 def get_user_by_email(db: Session, email: str):
     return db.query(models.User).filter(models.User.email == email).first()
 
-def create_user(db: Session, user: schemas.UserCreate, role: str = "user", is_verified: bool = True, verification_token: str = None):
+def create_user(db: Session, user: schemas.UserCreate, role: str = "user", is_verified: bool = True, verification_token: str = None, can_vote: bool = False):
     hashed_password = auth.get_password_hash(user.password)
     db_user = models.User(
         username=user.username,
@@ -19,6 +19,7 @@ def create_user(db: Session, user: schemas.UserCreate, role: str = "user", is_ve
         hashed_password=hashed_password,
         role=role,
         is_verified=is_verified,
+        can_vote=can_vote,
         verification_token=verification_token
     )
     db.add(db_user)
@@ -49,6 +50,10 @@ def set_setting(db: Session, key: str, value: str):
 # --- Matchmaking & Elo CRUD ---
 
 def get_next_match(db: Session, user_id: int):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user or not user.can_vote:
+        return {"not_approved": True}
+
     # Check daily limit
     limit_str = get_setting(db, "daily_vote_limit", "20")
     try:
@@ -126,6 +131,10 @@ def calculate_elo(r_a, r_b, score_a, matches_a, matches_b):
     return new_r_a, new_r_b
 
 def submit_vote(db: Session, vote: schemas.VoteSubmit, user_id: int):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user or not user.can_vote:
+        raise ValueError("User not approved to vote")
+
     # Fetch photos
     photo_a = db.query(models.Photo).filter(models.Photo.id == vote.photo_a_id).with_for_update().first()
     photo_b = db.query(models.Photo).filter(models.Photo.id == vote.photo_b_id).with_for_update().first()
@@ -188,6 +197,15 @@ def update_user_role(db: Session, user_id: int, role: str):
     if not db_user:
         return None
     db_user.role = role
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def update_user_approval(db: Session, user_id: int, can_vote: bool):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not db_user:
+        return None
+    db_user.can_vote = can_vote
     db.commit()
     db.refresh(db_user)
     return db_user

@@ -14,7 +14,8 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     role = Column(String, default="user") # "user" or "admin"
-    is_verified = Column(Boolean, default=False)
+    is_verified = Column(Boolean, default=True)
+    can_vote = Column(Boolean, default=False)
     verification_token = Column(String, unique=True, index=True, nullable=True)
     created_at = Column(DateTime, default=utcnow)
 

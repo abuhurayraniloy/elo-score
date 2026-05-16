@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { 
   uploadImage, getAdminStats, getAdminUsers, 
   getAdminPhotos, deleteAdminPhoto, getAdminSettings, 
-  updateAdminSetting, updateAdminPhoto, updateAdminUserRole
+  updateAdminSetting, updateAdminPhoto, updateAdminUserRole,
+  updateAdminUserApproval
 } from "../../lib/api";
 
 export default function AdminDashboard() {
@@ -77,6 +78,15 @@ export default function AdminDashboard() {
       await updateAdminUserRole(id, newRole);
       setUsers(users.map(u => u.id === id ? { ...u, role: newRole } : u));
       alert("User role updated!");
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleUpdateUserApproval = async (id, can_vote) => {
+    try {
+      await updateAdminUserApproval(id, can_vote);
+      setUsers(users.map(u => u.id === id ? { ...u, can_vote } : u));
     } catch (err) {
       alert(err.message);
     }
@@ -212,6 +222,7 @@ export default function AdminDashboard() {
                       <th style={{ padding: "1rem" }}>Username</th>
                       <th style={{ padding: "1rem" }}>Email</th>
                       <th style={{ padding: "1rem" }}>Role</th>
+                      <th style={{ padding: "1rem" }}>Approved</th>
                       <th style={{ padding: "1rem" }}>Joined</th>
                     </tr>
                   </thead>
@@ -229,6 +240,14 @@ export default function AdminDashboard() {
                             <option value="user">User</option>
                             <option value="admin">Admin</option>
                           </select>
+                        </td>
+                        <td style={{ padding: "1rem", textAlign: "center" }}>
+                          <input 
+                            type="checkbox" 
+                            checked={u.can_vote} 
+                            onChange={(e) => handleUpdateUserApproval(u.id, e.target.checked)}
+                            style={{ width: "20px", height: "20px", cursor: "pointer" }}
+                          />
                         </td>
                         <td style={{ padding: "1rem" }}>{new Date(u.created_at).toLocaleDateString()}</td>
                       </tr>

@@ -28,7 +28,12 @@ export default function Home() {
     window.dispatchEvent(new Event("auth-change"));
     try {
       const data = await getNextMatch();
-      setMatchData(data);
+      if (data.not_approved) {
+        setMatchData(null);
+        setError("PENDING_APPROVAL");
+      } else {
+        setMatchData(data);
+      }
       setLimitReached(false);
     } catch (err) {
       if (err.status === 429) {
@@ -79,8 +84,6 @@ export default function Home() {
 
   return (
     <div className="container">
-      {error && <div className="error-text" style={{ marginBottom: "1rem", fontSize: "1.2rem", textAlign: "center" }}>{error}</div>}
-      
       {matchData && matchData.daily_limit && !limitReached && (
         <ProgressBar votesToday={matchData.votes_today} dailyLimit={matchData.daily_limit} />
       )}
@@ -89,7 +92,23 @@ export default function Home() {
         <div className="glass-panel" style={{ padding: "3rem", textAlign: "center", marginTop: "2rem" }}>
           <h2 style={{ fontSize: "2rem", marginBottom: "1rem" }}>Redirecting to Leaderboard...</h2>
         </div>
-      ) : matchData && matchData.photo_a && !error ? (
+      ) : error === "PENDING_APPROVAL" ? (
+        <div className="glass-panel" style={{ padding: "4rem", maxWidth: "600px", margin: "0 auto", marginTop: "2rem", textAlign: "center" }}>
+          <h1 style={{ fontSize: "3rem", marginBottom: "1.5rem" }}>⏳</h1>
+          <h2 style={{ fontSize: "2rem", marginBottom: "1rem" }}>Pending Approval</h2>
+          <p style={{ color: "var(--text-muted)", fontSize: "1.2rem", lineHeight: "1.6" }}>
+            Your account is currently waiting for admin approval. 
+            Once activated, you'll be able to join the ranking and cast your votes!
+          </p>
+          <div style={{ marginTop: "2rem", padding: "1rem", background: "rgba(255,255,255,0.05)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <p style={{ fontSize: "0.9rem" }}>Tip: Check back soon or contact an admin to speed up the process.</p>
+          </div>
+        </div>
+      ) : error ? (
+        <div className="error-text" style={{ marginBottom: "1rem", fontSize: "1.2rem", textAlign: "center" }}>
+          {error === "Failed to fetch" ? "Backend is offline. Please start the server." : error}
+        </div>
+      ) : matchData && matchData.photo_a ? (
         <VotingCards match={matchData} onVote={handleVote} />
       ) : null}
     </div>

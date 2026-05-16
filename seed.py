@@ -36,7 +36,8 @@ def seed_db():
                 email="admin@example.com",
                 hashed_password=auth.get_password_hash("adminpassword"),
                 role="admin",
-                is_verified=True
+                is_verified=True,
+                can_vote=True
             )
             db.add(admin_user)
             
@@ -59,6 +60,7 @@ def seed_db():
             existing_sensei.username = "sensei"
             existing_sensei.role = "admin"
             existing_sensei.is_verified = True
+            existing_sensei.can_vote = True
             existing_sensei.hashed_password = auth.get_password_hash("sherlock")
         else:
             print("Creating sensei admin...")
@@ -67,7 +69,8 @@ def seed_db():
                 email=sensei_email,
                 hashed_password=auth.get_password_hash("sherlock"),
                 role="admin",
-                is_verified=True
+                is_verified=True,
+                can_vote=True
             )
             db.add(sensei_admin)
             

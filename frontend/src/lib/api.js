@@ -154,6 +154,19 @@ export const updateAdminUserRole = async (id, role) => {
   return res.json();
 };
 
+export const updateAdminUserApproval = async (id, can_vote) => {
+  const res = await fetch(`${BASE_URL}/api/admin/users/${id}/approval`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify({ can_vote })
+  });
+  if (!res.ok) throw new Error("Failed to update user approval");
+  return res.json();
+};
+
 export const getAdminSettings = async () => {
   const res = await fetch(`${BASE_URL}/api/admin/settings`, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error("Failed to fetch settings");

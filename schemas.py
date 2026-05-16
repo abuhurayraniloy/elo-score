@@ -24,6 +24,8 @@ class UserResponse(BaseModel):
     username: str
     email: str
     role: str
+    is_verified: bool
+    can_vote: bool
     created_at: datetime
 
     class Config:
@@ -77,4 +79,7 @@ class PhotoUpdate(BaseModel):
 
 class UserRoleUpdate(BaseModel):
     role: str
+
+class UserApprovalUpdate(BaseModel):
+    can_vote: bool
 

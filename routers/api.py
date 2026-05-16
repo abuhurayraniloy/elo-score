@@ -166,3 +166,15 @@ def update_admin_user_role(
     if not updated:
         raise HTTPException(status_code=404, detail="User not found")
     return updated
+
+@router.patch("/admin/users/{user_id}/approval", response_model=schemas.UserResponse)
+def update_admin_user_approval(
+    user_id: int,
+    update: schemas.UserApprovalUpdate,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(get_admin_user)
+):
+    updated = crud.update_user_approval(db, user_id, can_vote=update.can_vote)
+    if not updated:
+        raise HTTPException(status_code=404, detail="User not found")
+    return updated
