@@ -56,6 +56,8 @@ def get_settings(
     settings = db.query(models.SystemSetting).all()
     if not any(s.key == "daily_vote_limit" for s in settings):
         settings.append(models.SystemSetting(key="daily_vote_limit", value="20"))
+    if not any(s.key == "daily_reset_hour" for s in settings):
+        settings.append(models.SystemSetting(key="daily_reset_hour", value="0"))
     return settings
 
 @router.post("/admin/settings/{key}", response_model=schemas.SettingResponse)

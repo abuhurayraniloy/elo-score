@@ -35,7 +35,8 @@ export default function Home() {
     } catch (err) {
       if (err.status === 429) {
         setLimitReached(true);
-        window.location.href = "/leaderboard?limit_reached=true";
+        const resetParam = err.next_reset ? `&next_reset=${encodeURIComponent(err.next_reset)}` : "";
+        window.location.href = `/leaderboard?limit_reached=true${resetParam}`;
       } else if (err.message === "No more matches available to vote on") {
         setError("You have voted on all available matches!");
       } else {

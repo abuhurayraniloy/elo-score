@@ -54,6 +54,25 @@ def get_next_match(db: Session, user_id: int):
     if not user:
         return None
 
+    # Check reset hour setting (0 to 23, default 0 UTC)
+    reset_hour_str = get_setting(db, "daily_reset_hour", "0")
+    try:
+        reset_hour = int(reset_hour_str)
+        reset_hour = max(0, min(23, reset_hour))
+    except ValueError:
+        reset_hour = 0
+
+    from datetime import datetime, time, timedelta
+    now_dt = datetime.utcnow()
+    reset_today = datetime.combine(now_dt.date(), time(hour=reset_hour))
+    
+    if now_dt >= reset_today:
+        last_reset = reset_today
+    else:
+        last_reset = reset_today - timedelta(days=1)
+        
+    next_reset = last_reset + timedelta(days=1)
+
     # Check daily limit
     limit_str = get_setting(db, "daily_vote_limit", "20")
     try:
@@ -61,16 +80,19 @@ def get_next_match(db: Session, user_id: int):
     except ValueError:
         daily_limit = 20
 
-    # Count REAL votes today (ignore guest votes for limit)
-    today = func.date(models.Match.voted_at)
+    # Count REAL votes cast since the last reset window
     votes_today = db.query(func.count(models.Match.id)).filter(
         models.Match.user_id == user_id,
         models.Match.is_guest == False,
-        func.date(models.Match.voted_at) == func.date(func.now())
+        models.Match.voted_at >= last_reset
     ).scalar()
 
     if votes_today >= daily_limit:
-        return {"limit_reached": True, "limit": daily_limit}
+        return {
+            "limit_reached": True, 
+            "limit": daily_limit,
+            "next_reset": next_reset.isoformat() + "Z"
+        }
 
     # Get pairs this user has already voted on
     seen_matches = db.query(models.Match.photo_a_id, models.Match.photo_b_id).filter(

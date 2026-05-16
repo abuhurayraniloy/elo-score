@@ -17,9 +17,15 @@ export default function Leaderboard() {
       const params = new URLSearchParams(window.location.search);
       if (params.get("limit_reached") === "true") {
         setLimitReached(true);
-        const now = new Date();
-        const tomorrowUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
-        setResetTime(tomorrowUTC.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' }));
+        const nextReset = params.get("next_reset");
+        if (nextReset) {
+          const resetDate = new Date(nextReset);
+          setResetTime(resetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        } else {
+          const now = new Date();
+          const tomorrowUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+          setResetTime(tomorrowUTC.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' }));
+        }
       }
     }
 

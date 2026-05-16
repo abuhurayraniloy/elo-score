@@ -137,11 +137,11 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleUpdateLimit = async (e) => {
+  const handleUpdateSetting = async (e, key) => {
     e.preventDefault();
-    const newLimit = e.target.limit.value;
+    const newValue = e.target.value.value;
     try {
-      await updateAdminSetting("daily_vote_limit", newLimit);
+      await updateAdminSetting(key, newValue);
       alert("Setting updated!");
       fetchData();
     } catch (err) {
@@ -353,14 +353,29 @@ export default function AdminDashboard() {
             )}
 
             {activeTab === "settings" && (
-              <div className="glass-panel" style={{ maxWidth: "500px" }}>
-                <h3>Global Settings</h3>
+              <div className="glass-panel" style={{ maxWidth: "550px" }}>
+                <h3 style={{ marginBottom: "1.5rem" }}>Global Settings</h3>
                 {settings.map(s => (
-                  <div key={s.key} style={{ marginTop: "1.5rem" }}>
-                    <form onSubmit={handleUpdateLimit} style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-                      <label style={{ textTransform: "capitalize" }}>{s.key.replace(/_/g, " ")}</label>
-                      <div style={{ display: "flex", gap: "1rem" }}>
-                        <input name="limit" type="number" defaultValue={s.value} className="form-input" style={{ flex: 1 }} />
+                  <div key={s.key} style={{ marginTop: "2rem", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "1.5rem" }}>
+                    <form onSubmit={(e) => handleUpdateSetting(e, s.key)} style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                      <label style={{ textTransform: "capitalize", fontWeight: "bold", fontSize: "1.1rem" }}>
+                        {s.key.replace(/_/g, " ")}
+                      </label>
+                      <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "-0.4rem" }}>
+                        {s.key === "daily_vote_limit" 
+                          ? "The maximum number of matches a user is permitted to vote on per day."
+                          : "The UTC hour (0-23) when the daily voting count resets and becomes available again."}
+                      </span>
+                      <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem" }}>
+                        <input 
+                          name="value" 
+                          type="number" 
+                          defaultValue={s.value} 
+                          className="form-input" 
+                          style={{ flex: 1 }} 
+                          min={s.key === "daily_reset_hour" ? 0 : 1}
+                          max={s.key === "daily_reset_hour" ? 23 : 9999}
+                        />
                         <button type="submit" className="btn-primary">Update</button>
                       </div>
                     </form>
