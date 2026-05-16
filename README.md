@@ -1,134 +1,134 @@
 # 🏆 Ranker: Premium Elo Image Ranking System
 
-Ranker is a modern, full-stack web application designed for pairwise image ranking using the **Elo Rating System**. Inspired by high-end dating apps and competitive ranking platforms, it features a mobile-first, glassmorphic UI and a robust admin management console.
-
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688)
-![Next.js](https://img.shields.io/badge/Frontend-Next.js-000000)
-![Database](https://img.shields.io/badge/Database-SQLite-003B57)
+Ranker is a modern, full-stack web application designed for pairwise image ranking using the **Elo Rating System**. Inspired by premium competitive rating systems, it features a mobile-first, glassmorphic UI and a robust admin dashboard.
 
 ---
 
-## ✨ Key Features
+## ⚡ Quick Start: Running the Project Locally
 
-### 🗳️ Voting Interface
-- **Tinder-Style Pairwise Comparison**: Compare two images and vote for your favorite.
-- **Progress Tracking**: Real-time progress bar showing your daily voting activity.
-- **Daily Limits**: Customizable voting limits per user to prevent spam and ensure data quality.
-- **Smooth Animations**: High-performance transitions and hover effects.
+Follow these step-by-step instructions to get the backend and frontend running on your local machine.
 
-### 👑 Admin Console
-- **Comprehensive Dashboard**: Live stats on total votes, active users, and top-performing photos.
-- **Photo Management**: Upload new images directly to the cloud (Supabase), delete images, or manually override Elo ratings.
-- **User Moderation**: 
-  - **Approval System**: New users must be manually approved by an admin before they can vote.
-  - **Role Management**: Easily promote users to Admin or demote them.
-- **System Settings**: Live-update system-wide settings like the daily vote limit.
-
-### 🔒 Security & Performance
-- **JWT Authentication**: Secure login and session management.
-- **Role-Based Access Control (RBAC)**: Strict separation between user and admin capabilities.
-- **Optimized Elo Algorithm**: Real-time rating updates using standard Elo K-factor logic.
-- **Cloud Storage**: Seamless integration with Supabase for reliable image hosting.
+### 📋 Prerequisites
+Ensure you have the following installed:
+* **Python 3.11+** (for the FastAPI backend)
+* **Node.js 18+** (for the Next.js frontend)
+* **Git**
 
 ---
 
-## 🛠️ Technology Stack
+### 📂 Step 1: Clone & Configure Backend
 
-| Layer | Technology |
-| :--- | :--- |
-| **Frontend** | Next.js 14, Vanilla CSS (Custom Design System) |
-| **Backend** | FastAPI (Python 3.13) |
-| **ORM** | SQLAlchemy |
-| **Database** | SQLite (Production-ready Postgres compatible) |
-| **Storage** | Supabase Storage |
-| **Auth** | JWT (JSON Web Tokens) with Bcrypt hashing |
+1. **Clone the repository** and navigate to the project root:
+   ```bash
+   git clone https://github.com/abuhurayraniloy/elo-score.git
+   cd elo-score
+   ```
+
+2. **Create and activate a virtual environment**:
+   * **Windows (PowerShell)**:
+     ```powershell
+     python -m venv venv
+     .\venv\Scripts\Activate.ps1
+     ```
+   * **macOS / Linux**:
+     ```bash
+     python3 -m venv venv
+     source venv/bin/activate
+     ```
+
+3. **Install python dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Set up environment variables**:
+   Create a file named `.env` in the root directory (where `main.py` is located) and copy the following configuration:
+   ```ini
+   DATABASE_URL=sqlite:///./elo.db
+   SECRET_KEY=""
+   ALGORITHM=HS256
+   ACCESS_TOKEN_EXPIRE_MINUTES=60
+   IMAGE_DIR=D:\images
+
+   # Supabase Cloud Storage (For User Registrations)
+   SUPABASE_URL=https://mzuslchmlyqavlftsphx.supabase.co
+   SUPABASE_KEY=your_supabase_anon_public_key
+   SUPABASE_SERVICE_KEY=your_supabase_service_role_key
+   ```
 
 ---
 
-## 🚀 Getting Started
+### 🗄️ Step 2: Seed the Database & Credentials
 
-### Prerequisites
-- Python 3.11+
-- Node.js 18+
-- Supabase Account (for image storage)
+The repository includes a seeding script that sets up standard matchmaking data, system settings, and default administration accounts.
 
-### 1. Backend Setup
+Run the seed command in your terminal:
 ```bash
-# Clone the repository
-cd ranker
-
-# Create a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure environment variables
-cp .env.example .env
-# Edit .env with your Supabase keys and SMTP settings
-```
-
-### 2. Database Initialization
-```bash
-# Seed the database and create the 'sensei' admin account
 python seed.py
 ```
 
-### 3. Frontend Setup
+#### 🔑 Default Accounts Created:
+Use these credentials to log in and start testing immediately:
+
+| Role | Username | Password | Email / Purpose |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `sensei` | `sherlock` | Principal Administrator Account |
+| **Admin (Backup)** | `admin` | `adminpassword` | General Administrative Role |
+| **User** | `testuser` | `testpassword` | Standard Voter profile |
+
+---
+
+### 🚀 Step 3: Run the FastAPI Backend
+
+Start the local API development server using `uvicorn`:
 ```bash
-cd frontend
-npm install
-npm run dev
+uvicorn main:app --reload
 ```
-
-The application will be available at:
-- **Frontend**: `http://localhost:3000`
-- **Backend API**: `http://localhost:8000`
-- **Interactive API Docs**: `http://localhost:8000/docs`
+The backend API will be live at:
+* **Backend Host**: `http://localhost:8000`
+* **Interactive API Documentation (Swagger UI)**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
-## 🔧 Environment Variables
+### 🎨 Step 4: Run the Next.js Frontend
 
-Create a `.env` file in the root directory with the following:
+1. Open a new terminal window, navigate to the `/frontend` directory:
+   ```bash
+   cd frontend
+   ```
 
-```ini
-# Database
-DATABASE_URL=sqlite:///./elo.db
+2. **Install Node modules**:
+   ```bash
+   npm install
+   ```
 
-# Security
-SECRET_KEY=your_super_secret_key
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# Supabase Storage
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-anon-key
-SUPABASE_SERVICE_KEY=your-service-role-key
-
-# SMTP (Optional)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
-```
+3. **Run the Next.js development server**:
+   ```bash
+   npm run dev
+   ```
+The frontend interface will be live at:
+* **Local Web Address**: [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## 🤝 Contributing
+## 🌐 Production Deployment Guide
 
-1. Fork the project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Deploying this project to cloud hosting is fully automated and optimized.
+
+### 1. Backend (FastAPI on Railway)
+1. Link your repository to a new project on [Railway.app](https://railway.app).
+2. Insert your `.env` keys into Railway's **Environment Variables** panel.
+3. In Railway settings, click **Generate Domain** under Environment to get your backend URL.
+*Railway automatically detects the `Procfile` pushed to the repository root and handles multi-threaded startup seamlessly!*
+
+### 2. Frontend (Next.js on Vercel)
+1. Import your repository into [Vercel.com](https://vercel.com).
+2. Set the **Root Directory** setting to `frontend`.
+3. Add a single environment variable:
+   * **Name**: `NEXT_PUBLIC_API_URL`
+   * **Value**: *[Your Railway Backend Domain URL]*
+4. Click **Deploy**.
 
 ---
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
 
 Developed with ❤️ by **Antigravity AI**.
