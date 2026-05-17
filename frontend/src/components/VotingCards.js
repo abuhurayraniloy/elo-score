@@ -9,13 +9,13 @@ export default function VotingCards({ match, onVote }) {
   const handleVote = async (winnerId) => {
     if (animatingWinner) return;
     setAnimatingWinner(winnerId);
-    
+
     // Call onVote and wait for the math result
     const result = await onVote(winnerId);
     if (result) {
       setEloResult(result);
     }
-    
+
     // Longer timeout to let the user see the math
     setTimeout(() => {
       setAnimatingWinner(null);
@@ -37,8 +37,17 @@ export default function VotingCards({ match, onVote }) {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
   return (
-    <div style={{ position: "relative", width: "100%", display: "flex", justifyContent: "center" }}>
-      <style dangerouslySetInnerHTML={{__html: `
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        display: "flex",
+        justifyContent: "center",
+      }}
+    >
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .scale-up-center { 
           animation: scale-up-center 0.45s cubic-bezier(0.390, 0.575, 0.565, 1.000) both; 
           z-index: 20;
@@ -73,30 +82,66 @@ export default function VotingCards({ match, onVote }) {
           20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
           100% { transform: translate(-50%, -150%) scale(1); opacity: 0; }
         }
-      `}} />
+      `,
+        }}
+      />
       <div className="cards-container">
-        <div className={getCardClass(match.photo_a.id)} onClick={() => handleVote(match.photo_a.id)}>
-          <img src={match.photo_a.image_url.startsWith("http") ? match.photo_a.image_url : `${baseUrl}${match.photo_a.image_url}`} alt="Photo A" className="card-img" />
+        <div
+          className={getCardClass(match.photo_a.id)}
+          onClick={() => handleVote(match.photo_a.id)}
+        >
+          <img
+            src={
+              match.photo_a.image_url.startsWith("http")
+                ? match.photo_a.image_url
+                : `${baseUrl}${match.photo_a.image_url}`
+            }
+            alt="Photo A"
+            className="card-img"
+          />
           <div className="card-overlay">
             <button className="vote-btn">❤️</button>
           </div>
           {eloResult && (
-            <div className="elo-float" style={{ color: eloResult.photo_a.change > 0 ? "#10b981" : "#ff4b4b" }}>
-              {eloResult.photo_a.change > 0 ? "+" : ""}{eloResult.photo_a.change.toFixed(1)}
+            <div
+              className="elo-float"
+              style={{
+                color: eloResult.photo_a.change > 0 ? "#10b981" : "#ff4b4b",
+              }}
+            >
+              {eloResult.photo_a.change > 0 ? "+" : ""}
+              {eloResult.photo_a.change.toFixed(1)}
             </div>
           )}
         </div>
-        
+
         <div className="vs-badge">VS</div>
- 
-        <div className={getCardClass(match.photo_b.id)} onClick={() => handleVote(match.photo_b.id)}>
-          <img src={match.photo_b.image_url.startsWith("http") ? match.photo_b.image_url : `${baseUrl}${match.photo_b.image_url}`} alt="Photo B" className="card-img" />
+
+        <div
+          className={getCardClass(match.photo_b.id)}
+          onClick={() => handleVote(match.photo_b.id)}
+        >
+          <img
+            src={
+              match.photo_b.image_url.startsWith("http")
+                ? match.photo_b.image_url
+                : `${baseUrl}${match.photo_b.image_url}`
+            }
+            alt="Photo B"
+            className="card-img"
+          />
           <div className="card-overlay">
             <button className="vote-btn">❤️</button>
           </div>
           {eloResult && (
-            <div className="elo-float" style={{ color: eloResult.photo_b.change > 0 ? "#10b981" : "#ff4b4b" }}>
-              {eloResult.photo_b.change > 0 ? "+" : ""}{eloResult.photo_b.change.toFixed(1)}
+            <div
+              className="elo-float"
+              style={{
+                color: eloResult.photo_b.change > 0 ? "#10b981" : "#ff4b4b",
+              }}
+            >
+              {eloResult.photo_b.change > 0 ? "+" : ""}
+              {eloResult.photo_b.change.toFixed(1)}
             </div>
           )}
         </div>

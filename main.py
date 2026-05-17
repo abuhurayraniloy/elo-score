@@ -32,6 +32,9 @@ else:
 app.include_router(auth_router.router)
 app.include_router(api.router)
 
+
 @app.get("/")
 def root():
-    return {"message": "Welcome to the Elo Image Ranking API. Check /docs for documentation."}
+    return {
+        "message": "Welcome to the Elo Image Ranking API. Check /docs for documentation."
+    }

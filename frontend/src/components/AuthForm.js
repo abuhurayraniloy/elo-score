@@ -31,7 +31,10 @@ export default function AuthForm({ onLoginSuccess }) {
     <div className="glass-panel form-container">
       <h2 className="form-title">{isLogin ? "Welcome Back" : "Join Ranker"}</h2>
       {error && <p className="error-text">{error}</p>}
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+      >
         <div className="form-group">
           <label className="form-label">Username</label>
           <input
@@ -77,15 +80,31 @@ export default function AuthForm({ onLoginSuccess }) {
             />
           </div>
         )}
-        <button type="submit" className="btn-primary" style={{ marginTop: "1rem" }}>
+        <button
+          type="submit"
+          className="btn-primary"
+          style={{ marginTop: "1rem" }}
+        >
           {isLogin ? "Sign In" : "Sign Up"}
         </button>
       </form>
-      <p style={{ textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
+      <p
+        style={{
+          textAlign: "center",
+          fontSize: "0.9rem",
+          color: "var(--text-muted)",
+        }}
+      >
         {isLogin ? "Don't have an account? " : "Already have an account? "}
         <button
           onClick={() => setIsLogin(!isLogin)}
-          style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontWeight: "600" }}
+          style={{
+            background: "none",
+            border: "none",
+            color: "var(--primary)",
+            cursor: "pointer",
+            fontWeight: "600",
+          }}
         >
           {isLogin ? "Sign Up" : "Sign In"}
         </button>
