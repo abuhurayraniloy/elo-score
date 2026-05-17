@@ -10,7 +10,7 @@ export default function Navbar() {
     const checkAuth = () => {
       setUser(getUserInfo());
     };
-    
+
     checkAuth();
     window.addEventListener("auth-change", checkAuth);
     return () => window.removeEventListener("auth-change", checkAuth);
@@ -26,21 +26,41 @@ export default function Navbar() {
   return (
     <nav className="navbar glass-panel">
       <div className="nav-container">
-        <a href="/" className="logo">🔥 Ranker</a>
-        <div className="nav-links" style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+        <a href="/" className="logo">
+          🔥 Ranker
+        </a>
+        <div
+          className="nav-links"
+          style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}
+        >
           <a href="/">Vote</a>
           <a href="/leaderboard">Leaderboard</a>
           {user?.role === "admin" && (
-            <a href="/admin" style={{ color: "var(--primary)", fontWeight: "bold" }}>Admin</a>
+            <a
+              href="/admin"
+              style={{ color: "var(--primary)", fontWeight: "bold" }}
+            >
+              Admin
+            </a>
           )}
           {user && (
             <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
               <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
-                Hi, <span style={{ color: "#fff", fontWeight: "600" }}>{user.username}</span>
+                Hi,{" "}
+                <span style={{ color: "#fff", fontWeight: "600" }}>
+                  {user.username}
+                </span>
               </span>
-              <button 
-                onClick={handleLogout} 
-                style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontWeight: "600", fontSize: "0.9rem" }}
+              <button
+                onClick={handleLogout}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--primary)",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                  fontSize: "0.9rem",
+                }}
               >
                 Log Out
               </button>

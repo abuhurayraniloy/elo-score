@@ -14,7 +14,7 @@ export const decodeToken = (token) => {
       atob(base64)
         .split("")
         .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
+        .join(""),
     );
     return JSON.parse(jsonPayload);
   } catch (e) {
@@ -28,16 +28,16 @@ export const getUserInfo = () => {
   if (!token) return null;
   const decoded = decodeToken(token);
   if (!decoded) return null;
-  
+
   // Check if token is expired
   if (decoded.exp && decoded.exp * 1000 < Date.now()) {
     localStorage.removeItem("token");
     return null;
   }
-  
+
   return {
     username: decoded.sub,
-    role: decoded.role
+    role: decoded.role,
   };
 };
 
@@ -51,7 +51,7 @@ export const login = async (username, password) => {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: formData.toString(),
   });
-  
+
   if (!res.ok) throw new Error("Invalid credentials");
   const data = await res.json();
   localStorage.setItem("token", data.access_token);
@@ -94,7 +94,7 @@ export const getNextMatch = async () => {
     throw { status: 429, ...errorData.detail };
   }
   if (!res.ok) {
-    const data = await res.json().catch(()=>({}));
+    const data = await res.json().catch(() => ({}));
     throw new Error(data.detail || "Failed to fetch match");
   }
   return res.json();
@@ -110,7 +110,7 @@ export const submitVote = async (photo_a_id, photo_b_id, winner_id) => {
     body: JSON.stringify({ photo_a_id, photo_b_id, winner_id }),
   });
   if (!res.ok) {
-    const data = await res.json().catch(()=>({}));
+    const data = await res.json().catch(() => ({}));
     throw new Error(data.detail || "Failed to submit vote");
   }
   return res.json();
@@ -119,7 +119,7 @@ export const submitVote = async (photo_a_id, photo_b_id, winner_id) => {
 export const getLeaderboard = async () => {
   const res = await fetch(`${BASE_URL}/api/leaderboard`);
   if (!res.ok) {
-    const data = await res.json().catch(()=>({}));
+    const data = await res.json().catch(() => ({}));
     throw new Error(data.detail || "Failed to fetch leaderboard");
   }
   return res.json();
@@ -135,34 +135,40 @@ export const uploadImage = async (file) => {
     body: formData,
   });
   if (!res.ok) {
-    const data = await res.json().catch(()=>({}));
+    const data = await res.json().catch(() => ({}));
     throw new Error(data.detail || "Failed to upload image");
   }
   return res.json();
 };
 
 export const getAdminStats = async () => {
-  const res = await fetch(`${BASE_URL}/api/admin/stats`, { headers: getAuthHeaders() });
+  const res = await fetch(`${BASE_URL}/api/admin/stats`, {
+    headers: getAuthHeaders(),
+  });
   if (!res.ok) throw new Error("Failed to fetch stats");
   return res.json();
 };
 
 export const getAdminUsers = async () => {
-  const res = await fetch(`${BASE_URL}/api/admin/users`, { headers: getAuthHeaders() });
+  const res = await fetch(`${BASE_URL}/api/admin/users`, {
+    headers: getAuthHeaders(),
+  });
   if (!res.ok) throw new Error("Failed to fetch users");
   return res.json();
 };
 
 export const getAdminPhotos = async () => {
-  const res = await fetch(`${BASE_URL}/api/admin/photos`, { headers: getAuthHeaders() });
+  const res = await fetch(`${BASE_URL}/api/admin/photos`, {
+    headers: getAuthHeaders(),
+  });
   if (!res.ok) throw new Error("Failed to fetch photos");
   return res.json();
 };
 
 export const deleteAdminPhoto = async (id) => {
-  const res = await fetch(`${BASE_URL}/api/admin/photos/${id}`, { 
+  const res = await fetch(`${BASE_URL}/api/admin/photos/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders() 
+    headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error("Failed to delete photo");
   return res.json();
@@ -173,9 +179,9 @@ export const updateAdminPhoto = async (id, data) => {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      ...getAuthHeaders()
+      ...getAuthHeaders(),
     },
-    body: JSON.stringify(data)
+    body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to update photo");
   return res.json();
@@ -186,9 +192,9 @@ export const updateAdminUserRole = async (id, role) => {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      ...getAuthHeaders()
+      ...getAuthHeaders(),
     },
-    body: JSON.stringify({ role })
+    body: JSON.stringify({ role }),
   });
   if (!res.ok) throw new Error("Failed to update user role");
   return res.json();
@@ -199,9 +205,9 @@ export const updateAdminUserApproval = async (id, can_vote) => {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      ...getAuthHeaders()
+      ...getAuthHeaders(),
     },
-    body: JSON.stringify({ can_vote })
+    body: JSON.stringify({ can_vote }),
   });
   if (!res.ok) throw new Error("Failed to update user approval");
   return res.json();
@@ -210,7 +216,7 @@ export const updateAdminUserApproval = async (id, can_vote) => {
 export const deleteAdminUser = async (id) => {
   const res = await fetch(`${BASE_URL}/api/admin/users/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders()
+    headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error("Failed to delete user");
   return res.json();
@@ -221,16 +227,18 @@ export const bulkDeleteAdminUsers = async (userIds) => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...getAuthHeaders()
+      ...getAuthHeaders(),
     },
-    body: JSON.stringify({ user_ids: userIds })
+    body: JSON.stringify({ user_ids: userIds }),
   });
   if (!res.ok) throw new Error("Failed bulk deleting users");
   return res.json();
 };
 
 export const getAdminSettings = async () => {
-  const res = await fetch(`${BASE_URL}/api/admin/settings`, { headers: getAuthHeaders() });
+  const res = await fetch(`${BASE_URL}/api/admin/settings`, {
+    headers: getAuthHeaders(),
+  });
   if (!res.ok) throw new Error("Failed to fetch settings");
   return res.json();
 };
@@ -240,9 +248,9 @@ export const updateAdminSetting = async (key, value) => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...getAuthHeaders()
+      ...getAuthHeaders(),
     },
-    body: JSON.stringify({ value })
+    body: JSON.stringify({ value }),
   });
   if (!res.ok) throw new Error("Failed to update setting");
   return res.json();
