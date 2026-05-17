@@ -24,9 +24,17 @@ body {
   display: flex;
   flex-direction: column;
   -webkit-font-smoothing: antialiased;
-  background-image: 
-    radial-gradient(circle at 15% 50%, rgba(255, 75, 75, 0.05), transparent 25%),
-    radial-gradient(circle at 85% 30%, rgba(255, 123, 84, 0.05), transparent 25%);
+  background-image:
+    radial-gradient(
+      circle at 15% 50%,
+      rgba(255, 75, 75, 0.05),
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 85% 30%,
+      rgba(255, 123, 84, 0.05),
+      transparent 25%
+    );
   background-attachment: fixed;
 }
 
@@ -102,7 +110,9 @@ a {
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   box-shadow: 0 4px 12px rgba(255, 75, 75, 0.3);
   display: inline-flex;
   justify-content: center;
@@ -154,7 +164,9 @@ a {
   color: var(--text-main);
   font-size: 1rem;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .form-input:focus {
@@ -220,7 +232,9 @@ a {
   overflow: hidden;
   cursor: pointer;
   position: relative;
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+  transition:
+    transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    box-shadow 0.3s ease;
 }
 
 .card:hover {
@@ -250,7 +264,7 @@ a {
   left: 0;
   right: 0;
   padding: 2rem 1rem 1rem;
-  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
   display: flex;
   justify-content: center;
   opacity: 0;
@@ -262,10 +276,10 @@ a {
 }
 
 .vote-btn {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(8px);
   color: white;
-  border: 1px solid rgba(255,255,255,0.3);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
   width: 60px;
   height: 60px;
@@ -273,7 +287,9 @@ a {
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
 .vote-btn:hover {
@@ -315,7 +331,9 @@ a {
   padding: 1rem;
   margin-bottom: 1rem;
   border-radius: 12px;
-  transition: transform 0.2s ease, background 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
 }
 
 .rank-item:hover {
@@ -331,9 +349,15 @@ a {
   text-align: center;
 }
 
-.rank-1 .rank-number { color: #fbbf24; }
-.rank-2 .rank-number { color: #9ca3af; }
-.rank-3 .rank-number { color: #b45309; }
+.rank-1 .rank-number {
+  color: #fbbf24;
+}
+.rank-2 .rank-number {
+  color: #9ca3af;
+}
+.rank-3 .rank-number {
+  color: #b45309;
+}
 
 .rank-img {
   width: 60px;
