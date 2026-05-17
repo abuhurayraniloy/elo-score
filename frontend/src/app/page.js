@@ -18,7 +18,7 @@ export default function Home() {
     setLoading(true);
     setError("");
     const token = localStorage.getItem("token");
-    
+
     if (!token) {
       setIsAuthenticated(false);
       setLoading(false);
@@ -35,7 +35,9 @@ export default function Home() {
     } catch (err) {
       if (err.status === 429) {
         setLimitReached(true);
-        const resetParam = err.next_reset ? `&next_reset=${encodeURIComponent(err.next_reset)}` : "";
+        const resetParam = err.next_reset
+          ? `&next_reset=${encodeURIComponent(err.next_reset)}`
+          : "";
         window.location.href = `/leaderboard?limit_reached=true${resetParam}`;
       } else if (err.message === "No more matches available to vote on") {
         setError("You have voted on all available matches!");
@@ -53,8 +55,12 @@ export default function Home() {
 
   const handleVote = async (winnerId) => {
     try {
-      const result = await submitVote(matchData.photo_a.id, matchData.photo_b.id, winnerId);
-      
+      const result = await submitVote(
+        matchData.photo_a.id,
+        matchData.photo_b.id,
+        winnerId,
+      );
+
       // Wait for the animation to play before fetching the next match
       setTimeout(async () => {
         await checkAuthAndLoadMatch();
@@ -70,7 +76,15 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="container" style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+      <div
+        className="container"
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "60vh",
+        }}
+      >
         <div className="form-title">Loading...</div>
       </div>
     );
@@ -87,14 +101,34 @@ export default function Home() {
   return (
     <div className="container">
       {matchData && matchData.daily_limit && !limitReached && (
-        <ProgressBar votesToday={matchData.votes_today} dailyLimit={matchData.daily_limit} />
+        <ProgressBar
+          votesToday={matchData.votes_today}
+          dailyLimit={matchData.daily_limit}
+        />
       )}
 
       {matchData && matchData.is_guest && (
-        <div className="glass-panel" style={{ padding: "1rem", marginBottom: "2rem", textAlign: "center", border: "1px solid var(--primary)", background: "rgba(255, 75, 75, 0.1)" }}>
-          <span style={{ fontWeight: "bold", color: "var(--primary)" }}>🎮 GUEST MODE</span>
-          <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>
-            {matchData.no_real_photos 
+        <div
+          className="glass-panel"
+          style={{
+            padding: "1rem",
+            marginBottom: "2rem",
+            textAlign: "center",
+            border: "1px solid var(--primary)",
+            background: "rgba(255, 75, 75, 0.1)",
+          }}
+        >
+          <span style={{ fontWeight: "bold", color: "var(--primary)" }}>
+            🎮 GUEST MODE
+          </span>
+          <p
+            style={{
+              fontSize: "0.9rem",
+              color: "var(--text-muted)",
+              marginTop: "0.5rem",
+            }}
+          >
+            {matchData.no_real_photos
               ? "Your account is approved! However, we are waiting for more user photos to begin the real competition. You are currently in guest mode."
               : "Your account is pending approval. You are currently voting in training mode (no rating impact)."}
           </p>
@@ -102,12 +136,26 @@ export default function Home() {
       )}
 
       {limitReached ? (
-        <div className="glass-panel" style={{ padding: "3rem", textAlign: "center", marginTop: "2rem" }}>
-          <h2 style={{ fontSize: "2rem", marginBottom: "1rem" }}>Redirecting to Leaderboard...</h2>
+        <div
+          className="glass-panel"
+          style={{ padding: "3rem", textAlign: "center", marginTop: "2rem" }}
+        >
+          <h2 style={{ fontSize: "2rem", marginBottom: "1rem" }}>
+            Redirecting to Leaderboard...
+          </h2>
         </div>
       ) : error ? (
-        <div className="error-text" style={{ marginBottom: "1rem", fontSize: "1.2rem", textAlign: "center" }}>
-          {error === "Failed to fetch" ? "Backend is offline. Please start the server." : error}
+        <div
+          className="error-text"
+          style={{
+            marginBottom: "1rem",
+            fontSize: "1.2rem",
+            textAlign: "center",
+          }}
+        >
+          {error === "Failed to fetch"
+            ? "Backend is offline. Please start the server."
+            : error}
         </div>
       ) : matchData && matchData.photo_a ? (
         <VotingCards match={matchData} onVote={handleVote} />
