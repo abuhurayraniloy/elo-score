@@ -74,3 +74,37 @@ class SystemSetting(Base):
 
     key = Column(String, primary_key=True, index=True)
     value = Column(String, nullable=False)
+
+
+class TournamentMatch(Base):
+    __tablename__ = "tournament_matches"
+
+    id = Column(Integer, primary_key=True, index=True)
+    round_number = Column(Integer, nullable=False)  # 1=Round of 32, 2=Round of 16, 3=Round of 8, 4=Semifinals, 5=Finals
+    match_index = Column(Integer, nullable=False)  # Index within the round (0-15, 0-7, 0-3, 0-1, 0)
+    photo_a_id = Column(Integer, ForeignKey("photos.id"), nullable=True)
+    photo_b_id = Column(Integer, ForeignKey("photos.id"), nullable=True)
+    winner_id = Column(Integer, ForeignKey("photos.id"), nullable=True)
+    votes_a = Column(Integer, default=0)
+    votes_b = Column(Integer, default=0)
+    is_active = Column(Boolean, default=False)
+
+    photo_a = relationship("Photo", foreign_keys=[photo_a_id])
+    photo_b = relationship("Photo", foreign_keys=[photo_b_id])
+    winner = relationship("Photo", foreign_keys=[winner_id])
+
+
+class TournamentVote(Base):
+    __tablename__ = "tournament_votes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    tournament_match_id = Column(
+        Integer, ForeignKey("tournament_matches.id"), nullable=False
+    )
+    selected_photo_id = Column(Integer, ForeignKey("photos.id"), nullable=False)
+    voted_at = Column(DateTime, default=utcnow)
+
+    user = relationship("User")
+    tournament_match = relationship("TournamentMatch")
+    selected_photo = relationship("Photo")

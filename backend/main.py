@@ -14,20 +14,19 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Elo Image Ranking API", version="1.0.0")
 
 # Setup CORS
+FRONTEND_URL = os.getenv("FRONTEND_URL", "*")
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=".*",
+    allow_origins=[FRONTEND_URL] if FRONTEND_URL != "*" else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Setup static files for images
-IMAGE_DIR = os.getenv("IMAGE_DIR", "D:\\images")
-if os.path.exists(IMAGE_DIR):
-    app.mount("/static", StaticFiles(directory=IMAGE_DIR), name="static")
-else:
-    print(f"Warning: Image directory {IMAGE_DIR} does not exist.")
+# Setup static files for images (Create data/images directory if it doesn't exist)
+IMAGE_DIR = os.getenv("IMAGE_DIR", os.path.join(os.getcwd(), "data", "images"))
+os.makedirs(IMAGE_DIR, exist_ok=True)
+app.mount("/static", StaticFiles(directory=IMAGE_DIR), name="static")
 
 app.include_router(auth_router.router)
 app.include_router(api.router)

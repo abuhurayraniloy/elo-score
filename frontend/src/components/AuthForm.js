@@ -7,7 +7,6 @@ export default function AuthForm({ onLoginSuccess }) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [file, setFile] = useState(null);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
@@ -17,8 +16,7 @@ export default function AuthForm({ onLoginSuccess }) {
       if (isLogin) {
         await login(username, password);
       } else {
-        if (!file) throw new Error("Please upload a photo to join!");
-        await register(username, email, password, file);
+        await register(username, email, password);
         await login(username, password);
       }
       onLoginSuccess();
@@ -67,19 +65,6 @@ export default function AuthForm({ onLoginSuccess }) {
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
-        {!isLogin && (
-          <div className="form-group">
-            <label className="form-label">Profile Photo (to be ranked)</label>
-            <input
-              className="form-input"
-              type="file"
-              accept="image/*"
-              required
-              onChange={(e) => setFile(e.target.files[0])}
-              style={{ padding: "0.5rem 0" }}
-            />
-          </div>
-        )}
         <button
           type="submit"
           className="btn-primary"

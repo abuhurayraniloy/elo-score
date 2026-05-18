@@ -103,3 +103,25 @@ from typing import List
 
 class BulkDeleteUsers(BaseModel):
     user_ids: List[int]
+
+
+class TournamentMatchResponse(BaseModel):
+    id: int
+    round_number: int
+    match_index: int
+    photo_a: Optional[PhotoBase] = None
+    photo_b: Optional[PhotoBase] = None
+    winner: Optional[PhotoBase] = None
+    votes_a: int
+    votes_b: int
+    is_active: bool
+    has_voted: bool = False
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class TournamentVoteSubmit(BaseModel):
+    tournament_match_id: int
+    selected_photo_id: int

@@ -201,3 +201,68 @@ def bulk_delete_admin_users(
     admin: models.User = Depends(get_admin_user),
 ):
     return crud.delete_users_bulk(db, payload.user_ids)
+
+
+@router.get(
+    "/tournament/bracket", response_model=List[schemas.TournamentMatchResponse]
+)
+def get_tournament_bracket(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    matches = crud.get_tournament_bracket(db)
+    voted_match_ids = {
+        v.tournament_match_id
+        for v in db.query(models.TournamentVote)
+        .filter(models.TournamentVote.user_id == current_user.id)
+        .all()
+    }
+    for m in matches:
+        m.has_voted = m.id in voted_match_ids
+    return matches
+
+
+@router.post("/tournament/vote", response_model=schemas.TournamentMatchResponse)
+def submit_tournament_vote(
+    vote: schemas.TournamentVoteSubmit,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    try:
+        return crud.submit_tournament_vote(db, vote, user_id=current_user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/tournament/advance")
+def advance_tournament_round(
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(get_admin_user),
+):
+    try:
+        return crud.advance_tournament_round(db)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/tournament/reset")
+def reset_tournament(
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(get_admin_user),
+):
+    try:
+        return crud.reset_tournament(db)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/tournament/hard-reset")
+def hard_reset_system(
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(get_admin_user),
+):
+    try:
+        return crud.hard_reset_system(db)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
