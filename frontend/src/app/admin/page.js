@@ -15,7 +15,11 @@ import {
   getUserInfo,
   deleteAdminUser,
   bulkDeleteAdminUsers,
+  advanceTournamentRound,
+  resetTournament,
+  hardResetSystem,
 } from "../../lib/api";
+
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -43,6 +47,53 @@ export default function AdminDashboard() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
+
+  const handleAdvanceRound = async () => {
+    if (
+      !confirm(
+        "Are you sure you want to advance the tournament to the next round? This will freeze current vote tallies and promote winners!"
+      )
+    )
+      return;
+    try {
+      const res = await advanceTournamentRound();
+      alert(`Success! Round advanced successfully! Details: ${JSON.stringify(res)}`);
+    } catch (err) {
+      alert(err.message || "Failed to advance tournament round");
+    }
+  };
+
+  const handleResetTournament = async () => {
+    if (
+      !confirm(
+        "WARNING: Are you sure you want to completely reset the tournament bracket? This will delete all vote histories, reset all matches, and start over at the Round of 32!"
+      )
+    )
+      return;
+    try {
+      await resetTournament();
+      alert("Tournament bracket successfully reset!");
+    } catch (err) {
+      alert(err.message || "Failed to reset tournament");
+    }
+  };
+
+  const handleHardReset = async () => {
+    if (
+      !confirm(
+        "DANGER: Are you sure you want to FACTORY RESET the entire system? This will clear all votes, reset all Elo scores to 1200, and clear the tournament bracket. This cannot be undone!"
+      )
+    )
+      return;
+    try {
+      await hardResetSystem();
+      alert("System has been factory reset successfully!");
+      if (activeTab === "overview") fetchData(); // refresh stats
+    } catch (err) {
+      alert(err.message || "Failed to hard reset system");
+    }
+  };
+
 
   useEffect(() => {
     setSelectedUsers([]);
@@ -217,7 +268,7 @@ export default function AdminDashboard() {
             paddingBottom: "1rem",
           }}
         >
-          {["overview", "photos", "users", "settings"].map((tab) => (
+          {["overview", "photos", "users", "settings", "tournament"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -640,7 +691,159 @@ export default function AdminDashboard() {
                 ))}
               </div>
             )}
+
+            {activeTab === "tournament" && (
+              <div
+                className="glass-panel"
+                style={{ padding: "2.5rem", maxWidth: "600px" }}
+              >
+                <h3 style={{ marginBottom: "1rem", fontSize: "1.5rem" }}>
+                  Tournament Bracket Manager
+                </h3>
+                <p
+                  style={{
+                    color: "var(--text-muted)",
+                    marginBottom: "2rem",
+                    lineHeight: "1.6",
+                  }}
+                >
+                  Use these controls to simulate bracket days passing. You can
+                  cast votes in the current round, then advance the round to
+                  promote winners, break ties randomly, and activate the next
+                  day's round. To start over with the 32 placeholder system
+                  photos, reset the tournament.
+                </p>
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "1.5rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "1.5rem",
+                      background: "rgba(255, 75, 75, 0.05)",
+                      border: "1px solid var(--primary)",
+                      borderRadius: "12px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div>
+                      <h4
+                        style={{ fontWeight: "700", marginBottom: "0.25rem" }}
+                      >
+                        Advance to Next Round
+                      </h4>
+                      <p
+                        style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}
+                      >
+                        Tallies current round's votes, randomizes ties, and
+                        creates matchups for the next day.
+                      </p>
+                    </div>
+                    <button
+                      className="btn-primary"
+                      onClick={handleAdvanceRound}
+                      style={{ whiteSpace: "nowrap" }}
+                    >
+                      Advance Round ⚡
+                    </button>
+                  </div>
+
+                  <div
+                    style={{
+                      padding: "1.5rem",
+                      background: "rgba(255, 255, 255, 0.03)",
+                      border: "1px solid var(--surface-border)",
+                      borderRadius: "12px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div>
+                      <h4
+                        style={{ fontWeight: "700", marginBottom: "0.25rem" }}
+                      >
+                        Reset Tournament Bracket
+                      </h4>
+                      <p
+                        style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}
+                      >
+                        Clears all vote counts, resets the bracket to the Round
+                        of 32, and clears voter logs.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleResetTournament}
+                      style={{
+                        whiteSpace: "nowrap",
+                        padding: "12px 24px",
+                        background: "rgba(255, 75, 75, 0.1)",
+                        color: "var(--primary)",
+                        border: "1px solid var(--primary)",
+                        borderRadius: "8px",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                      }}
+                    >
+                      Reset Bracket 🔄
+                    </button>
+                  </div>
+
+                  <div
+                    style={{
+                      padding: "1.5rem",
+                      background: "rgba(255, 0, 0, 0.1)",
+                      border: "2px dashed #ff4b4b",
+                      borderRadius: "12px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginTop: "1rem"
+                    }}
+                  >
+                    <div>
+                      <h4
+                        style={{ fontWeight: "700", marginBottom: "0.25rem", color: "#ff4b4b" }}
+                      >
+                        Hard Reset System
+                      </h4>
+                      <p
+                        style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}
+                      >
+                        DANGER: Restarts all voting fresh from the beginning.
+                        Resets all Elo ratings to 1200, clears all standard and tournament matches.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleHardReset}
+                      style={{
+                        whiteSpace: "nowrap",
+                        padding: "12px 24px",
+                        background: "#ff4b4b",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "8px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                        boxShadow: "0 4px 12px rgba(255, 75, 75, 0.4)"
+                      }}
+                    >
+                      Factory Reset ⚠️
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
+
         )}
       </div>
     </div>

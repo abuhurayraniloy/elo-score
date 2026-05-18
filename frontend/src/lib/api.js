@@ -58,16 +58,16 @@ export const login = async (username, password) => {
   return data;
 };
 
-export const register = async (username, email, password, file) => {
-  const formData = new FormData();
+export const register = async (username, email, password) => {
+  const formData = new URLSearchParams();
   formData.append("username", username);
   formData.append("email", email);
   formData.append("password", password);
-  formData.append("file", file);
 
   const res = await fetch(`${BASE_URL}/api/auth/register`, {
     method: "POST",
-    body: formData,
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: formData.toString(),
   });
   if (!res.ok) {
     const data = await res.json();
@@ -255,3 +255,69 @@ export const updateAdminSetting = async (key, value) => {
   if (!res.ok) throw new Error("Failed to update setting");
   return res.json();
 };
+
+export const hardResetSystem = async () => {
+  const res = await fetch(`${BASE_URL}/api/tournament/hard-reset`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.detail || "Failed to hard reset system");
+  }
+  return res.json();
+};
+export const getTournamentBracket = async () => {
+  const res = await fetch(`${BASE_URL}/api/tournament/bracket`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to fetch tournament bracket");
+  return res.json();
+};
+
+export const submitTournamentVote = async (
+  tournamentMatchId,
+  selectedPhotoId
+) => {
+  const res = await fetch(`${BASE_URL}/api/tournament/vote`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({
+      tournament_match_id: tournamentMatchId,
+      selected_photo_id: selectedPhotoId,
+    }),
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.detail || "Failed to submit tournament vote");
+  }
+  return res.json();
+};
+
+export const advanceTournamentRound = async () => {
+  const res = await fetch(`${BASE_URL}/api/tournament/advance`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.detail || "Failed to advance tournament round");
+  }
+  return res.json();
+};
+
+export const resetTournament = async () => {
+  const res = await fetch(`${BASE_URL}/api/tournament/reset`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.detail || "Failed to reset tournament");
+  }
+  return res.json();
+};
+

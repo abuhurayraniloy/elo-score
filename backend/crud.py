@@ -407,3 +407,231 @@ def get_system_stats(db: Session):
         "total_votes": total_votes,
         "top_photo": top_photo,
     }
+
+
+def get_tournament_bracket(db: Session):
+    return (
+        db.query(models.TournamentMatch)
+        .order_by(
+            models.TournamentMatch.round_number, models.TournamentMatch.match_index
+        )
+        .all()
+    )
+
+
+def submit_tournament_vote(
+    db: Session, vote: schemas.TournamentVoteSubmit, user_id: int
+):
+    match = (
+        db.query(models.TournamentMatch)
+        .filter(models.TournamentMatch.id == vote.tournament_match_id)
+        .first()
+    )
+    if not match:
+        raise ValueError("Match-up not found")
+    if not match.is_active:
+        raise ValueError("This match-up is not active for voting")
+    if vote.selected_photo_id not in (match.photo_a_id, match.photo_b_id):
+        raise ValueError("Invalid photo selection for this match-up")
+
+    # Check if user already voted
+    existing_vote = (
+        db.query(models.TournamentVote)
+        .filter(
+            models.TournamentVote.user_id == user_id,
+            models.TournamentVote.tournament_match_id == vote.tournament_match_id,
+        )
+        .first()
+    )
+    if existing_vote:
+        raise ValueError("You have already voted on this match-up")
+
+    # Create Vote
+    new_vote = models.TournamentVote(
+        user_id=user_id,
+        tournament_match_id=vote.tournament_match_id,
+        selected_photo_id=vote.selected_photo_id,
+    )
+    db.add(new_vote)
+
+    # Increment tallies
+    if vote.selected_photo_id == match.photo_a_id:
+        match.votes_a += 1
+    else:
+        match.votes_b += 1
+
+    db.commit()
+    db.refresh(match)
+    return match
+
+
+import random
+
+
+def advance_tournament_round(db: Session):
+    # Find the active round
+    active_match = (
+        db.query(models.TournamentMatch)
+        .filter(models.TournamentMatch.is_active == True)
+        .first()
+    )
+    if not active_match:
+        # If no round is active, we find the first round (Round of 32) that hasn't completed yet
+        first_incomplete = (
+            db.query(models.TournamentMatch)
+            .filter(models.TournamentMatch.winner_id == None)
+            .order_by(models.TournamentMatch.round_number.asc())
+            .first()
+        )
+        if not first_incomplete:
+            raise ValueError(
+                "Tournament is already complete! You can reset it to start again."
+            )
+        active_round = first_incomplete.round_number
+    else:
+        active_round = active_match.round_number
+
+    # Get all matches in this active round
+    active_matches = (
+        db.query(models.TournamentMatch)
+        .filter(models.TournamentMatch.round_number == active_round)
+        .all()
+    )
+
+    # Tally winners and promote
+    winners = []
+    for match in active_matches:
+        # Skip if participants are missing
+        if not match.photo_a_id or not match.photo_b_id:
+            continue
+
+        # Determine winner
+        if match.votes_a > match.votes_b:
+            winner_id = match.photo_a_id
+        elif match.votes_b > match.votes_a:
+            winner_id = match.photo_b_id
+        else:
+            # Tie breaker: random
+            winner_id = random.choice([match.photo_a_id, match.photo_b_id])
+
+        match.winner_id = winner_id
+        match.is_active = False
+        winners.append(winner_id)
+
+        # Promote to the next round if active_round < 5 (Finals)
+        if active_round < 5:
+            next_round = active_round + 1
+            next_match_index = match.match_index // 2
+            is_photo_a = match.match_index % 2 == 0
+
+            next_match = (
+                db.query(models.TournamentMatch)
+                .filter(
+                    models.TournamentMatch.round_number == next_round,
+                    models.TournamentMatch.match_index == next_match_index,
+                )
+                .first()
+            )
+            if next_match:
+                if is_photo_a:
+                    next_match.photo_a_id = winner_id
+                else:
+                    next_match.photo_b_id = winner_id
+
+    # Activate the next round
+    if active_round < 5:
+        next_matches = (
+            db.query(models.TournamentMatch)
+            .filter(models.TournamentMatch.round_number == active_round + 1)
+            .all()
+        )
+        for nm in next_matches:
+            # Only activate if both participants are present
+            if nm.photo_a_id and nm.photo_b_id:
+                nm.is_active = True
+
+    db.commit()
+    return {"advanced_from": active_round, "winners_count": len(winners)}
+
+
+def reset_tournament(db: Session):
+    # Clear votes
+    db.query(models.TournamentVote).delete()
+
+    # Reset all matches
+    matches = db.query(models.TournamentMatch).all()
+    for m in matches:
+        m.votes_a = 0
+        m.votes_b = 0
+        m.winner_id = None
+        m.is_active = m.round_number == 1  # Only activate Round 1 (Round of 32)
+        if m.round_number > 1:
+            m.photo_a_id = None
+            m.photo_b_id = None
+
+    # Re-seed Round of 32 (round 1)
+    photos = db.query(models.Photo).filter(models.Photo.user_id == None).all()
+    if len(photos) >= 32:
+        for i in range(16):
+            m = (
+                db.query(models.TournamentMatch)
+                .filter(
+                    models.TournamentMatch.round_number == 1,
+                    models.TournamentMatch.match_index == i,
+                )
+                .first()
+            )
+            if m:
+                m.photo_a_id = photos[2 * i].id
+                m.photo_b_id = photos[2 * i + 1].id
+                m.is_active = True
+
+    db.commit()
+    return {"detail": "Tournament has been reset successfully"}
+
+
+def hard_reset_system(db: Session):
+    # Clear all standard matches
+    db.query(models.Match).delete()
+    
+    # Reset all photos to 1200 ELO and 0 matches
+    photos = db.query(models.Photo).all()
+    for p in photos:
+        p.elo_rating = 1200.0
+        p.matches_played = 0
+    
+    # Call standard tournament reset logic
+    # Clear votes
+    db.query(models.TournamentVote).delete()
+
+    # Reset all matches
+    tourn_matches = db.query(models.TournamentMatch).all()
+    for m in tourn_matches:
+        m.votes_a = 0
+        m.votes_b = 0
+        m.winner_id = None
+        m.is_active = m.round_number == 1  # Only activate Round 1 (Round of 32)
+        if m.round_number > 1:
+            m.photo_a_id = None
+            m.photo_b_id = None
+
+    # Re-seed Round of 32 (round 1)
+    system_photos = [p for p in photos if p.user_id is None]
+    if len(system_photos) >= 32:
+        for i in range(16):
+            m = (
+                db.query(models.TournamentMatch)
+                .filter(
+                    models.TournamentMatch.round_number == 1,
+                    models.TournamentMatch.match_index == i,
+                )
+                .first()
+            )
+            if m:
+                m.photo_a_id = system_photos[2 * i].id
+                m.photo_b_id = system_photos[2 * i + 1].id
+                m.is_active = True
+
+    db.commit()
+    return {"detail": "System has been hard reset successfully. All votes cleared and scores reset to 1200."}
+

@@ -4,17 +4,17 @@ import { useEffect, useState } from "react";
 import AuthForm from "../components/AuthForm";
 import VotingCards from "../components/VotingCards";
 import ProgressBar from "../components/ProgressBar";
-import { getNextMatch, submitVote, getUserInfo } from "../lib/api";
+import { getTournamentBracket, submitTournamentVote } from "../lib/api";
+import Link from "next/link";
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [matchData, setMatchData] = useState(null);
-  const [user, setUser] = useState(null);
+  const [bracketMatches, setBracketMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [limitReached, setLimitReached] = useState(false);
+  const [submittingVote, setSubmittingVote] = useState(false);
 
-  const checkAuthAndLoadMatch = async () => {
+  const loadVotingData = async () => {
     setLoading(true);
     setError("");
     const token = localStorage.getItem("token");
@@ -26,53 +26,61 @@ export default function Home() {
     }
 
     setIsAuthenticated(true);
-    setUser(getUserInfo());
-    window.dispatchEvent(new Event("auth-change"));
     try {
-      const data = await getNextMatch();
-      setMatchData(data);
-      setLimitReached(false);
+      const data = await getTournamentBracket();
+      setBracketMatches(data);
     } catch (err) {
-      if (err.status === 429) {
-        setLimitReached(true);
-        const resetParam = err.next_reset
-          ? `&next_reset=${encodeURIComponent(err.next_reset)}`
-          : "";
-        window.location.href = `/leaderboard?limit_reached=true${resetParam}`;
-      } else if (err.message === "No more matches available to vote on") {
-        setError("You have voted on all available matches!");
-      } else {
-        setError(err.message || "Failed to load match");
-      }
+      setError(err.message || "Failed to load voting matches");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    checkAuthAndLoadMatch();
+    loadVotingData();
   }, []);
 
+  // Filter for active match-ups for the current round
+  const activeMatches = bracketMatches.filter((m) => m.is_active);
+  const unvotedMatches = activeMatches.filter((m) => !m.has_voted);
+
+  // Get the first active, unvoted match
+  const currentMatch = unvotedMatches[0];
+
+  // Calculate today's voting progress
+  const totalActiveToday = activeMatches.length;
+  const votedTodayCount = totalActiveToday - unvotedMatches.length;
+
   const handleVote = async (winnerId) => {
+    if (submittingVote || !currentMatch) return;
+    setSubmittingVote(true);
     try {
-      const result = await submitVote(
-        matchData.photo_a.id,
-        matchData.photo_b.id,
-        winnerId,
-      );
+      await submitTournamentVote(currentMatch.id, winnerId);
 
-      // Wait for the animation to play before fetching the next match
+      // Return a simulated rating change to trigger the premium float animation
+      const simulatedResult = {
+        photo_a: { change: 1.0 },
+        photo_b: { change: 1.0 },
+      };
+
+      // Refresh data after the slide animation has played out
       setTimeout(async () => {
-        await checkAuthAndLoadMatch();
-      }, 1000);
+        try {
+          const data = await getTournamentBracket();
+          setBracketMatches(data);
+        } catch (err) {
+          console.error("Failed to refresh bracket data", err);
+        } finally {
+          setSubmittingVote(false);
+        }
+      }, 1200);
 
-      return result;
+      return simulatedResult;
     } catch (err) {
       setError(err.message || "Failed to submit vote");
+      setSubmittingVote(false);
     }
   };
-
-  // Removed local handleLogout since it's now in the Navbar
 
   if (loading) {
     return (
@@ -85,7 +93,7 @@ export default function Home() {
           minHeight: "60vh",
         }}
       >
-        <div className="form-title">Loading...</div>
+        <div className="form-title">Loading Active Matches...</div>
       </div>
     );
   }
@@ -93,62 +101,26 @@ export default function Home() {
   if (!isAuthenticated) {
     return (
       <div className="container">
-        <AuthForm onLoginSuccess={checkAuthAndLoadMatch} />
+        <AuthForm onLoginSuccess={loadVotingData} />
       </div>
     );
   }
 
   return (
     <div className="container">
-      {matchData && matchData.daily_limit && !limitReached && (
+      {/* ProgressBar for daily matches */}
+      {totalActiveToday > 0 && (
         <ProgressBar
-          votesToday={matchData.votes_today}
-          dailyLimit={matchData.daily_limit}
+          votesToday={votedTodayCount}
+          dailyLimit={totalActiveToday}
         />
       )}
 
-      {matchData && matchData.is_guest && (
-        <div
-          className="glass-panel"
-          style={{
-            padding: "1rem",
-            marginBottom: "2rem",
-            textAlign: "center",
-            border: "1px solid var(--primary)",
-            background: "rgba(255, 75, 75, 0.1)",
-          }}
-        >
-          <span style={{ fontWeight: "bold", color: "var(--primary)" }}>
-            🎮 GUEST MODE
-          </span>
-          <p
-            style={{
-              fontSize: "0.9rem",
-              color: "var(--text-muted)",
-              marginTop: "0.5rem",
-            }}
-          >
-            {matchData.no_real_photos
-              ? "Your account is approved! However, we are waiting for more user photos to begin the real competition. You are currently in guest mode."
-              : "Your account is pending approval. You are currently voting in training mode (no rating impact)."}
-          </p>
-        </div>
-      )}
-
-      {limitReached ? (
-        <div
-          className="glass-panel"
-          style={{ padding: "3rem", textAlign: "center", marginTop: "2rem" }}
-        >
-          <h2 style={{ fontSize: "2rem", marginBottom: "1rem" }}>
-            Redirecting to Leaderboard...
-          </h2>
-        </div>
-      ) : error ? (
+      {error && (
         <div
           className="error-text"
           style={{
-            marginBottom: "1rem",
+            marginBottom: "2rem",
             fontSize: "1.2rem",
             textAlign: "center",
           }}
@@ -157,9 +129,71 @@ export default function Home() {
             ? "Backend is offline. Please start the server."
             : error}
         </div>
-      ) : matchData && matchData.photo_a ? (
-        <VotingCards match={matchData} onVote={handleVote} />
-      ) : null}
+      )}
+
+      {/* Main Duel comparison card area */}
+      {currentMatch ? (
+        <div style={{ textAlign: "center" }}>
+          <h2 style={{ fontSize: "1.8rem", marginBottom: "0.5rem" }}>
+            Tournament Match #{currentMatch.match_index + 1}
+          </h2>
+          <p
+            style={{
+              color: "var(--text-muted)",
+              marginBottom: "2rem",
+              fontSize: "1rem",
+            }}
+          >
+            Which image should advance in the bracket? Click your favorite to vote!
+          </p>
+          <VotingCards
+            match={{
+              photo_a: currentMatch.photo_a,
+              photo_b: currentMatch.photo_b,
+            }}
+            onVote={handleVote}
+          />
+        </div>
+      ) : (
+        <div
+          className="glass-panel"
+          style={{
+            padding: "4rem 2rem",
+            textAlign: "center",
+            maxWidth: "600px",
+            margin: "2rem auto",
+            borderRadius: "24px",
+            border: "1px solid var(--surface-border)",
+            boxShadow: "var(--shadow-subtle)",
+          }}
+        >
+          <span style={{ fontSize: "4rem" }}>🎉</span>
+          <h2
+            style={{
+              fontSize: "2rem",
+              marginTop: "1.5rem",
+              marginBottom: "1rem",
+            }}
+          >
+            All Caught Up!
+          </h2>
+          <p
+            style={{
+              color: "var(--text-muted)",
+              lineHeight: "1.6",
+              marginBottom: "2rem",
+              fontSize: "1.1rem",
+            }}
+          >
+            You have successfully voted on all active match-ups for this round!
+            Check out the visual tournament bracket tree to view the live standings,
+            completed round percentages, and upcoming duels.
+          </p>
+          <Link href="/leaderboard" className="btn-primary">
+            Explore Bracket Standings 🏆
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
