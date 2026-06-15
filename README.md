@@ -130,5 +130,3 @@ Deploying this project to cloud hosting is fully automated and optimized.
 4. Click **Deploy**.
 
 ---
-
-Developed with ❤️ by **Antigravity AI**.
